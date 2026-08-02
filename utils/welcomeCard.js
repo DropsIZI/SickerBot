@@ -15,7 +15,10 @@ const W = 1280, H = 720;
 // Posiciones en fracciones del lienzo, medidas sobre el fondo:
 // el avatar va dentro del agujero del donut y el texto en el hueco
 // que queda entre el donut y la chica.
-const DONUT = { cx: 0.234, cy: 0.489, hueco: 0.086 }; // hueco = radio, fracción del ancho
+// Medido sobre el fondo buscando el mayor circulo inscrito en el agujero.
+// El agujero es irregular, asi que el radio va algo por encima del inscrito
+// (164px) para llenarlo; el borde blanco disimula el solape con la masa.
+const DONUT = { cx: 0.2389, cy: 0.5054, hueco: 0.102 }; // hueco = radio, fracción del ancho
 const TEXTO = { cx: 0.540, maxAncho: 0.29 };          // maxAncho, fracción del ancho
 
 // Reduce la fuente hasta que el texto quepa en el ancho disponible
@@ -66,11 +69,11 @@ async function generateWelcomeCard(member) {
   }
   ctx.restore();
 
-  // Borde suave para separar el avatar de la masa del donut
+  // Borde que tapa la union entre el avatar y el agujero irregular
   ctx.beginPath();
   ctx.arc(avatarCX, avatarCY, radio, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 8;
   ctx.stroke();
 
   // --- Texto ---
