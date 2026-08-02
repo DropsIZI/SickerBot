@@ -50,7 +50,7 @@ function purgarCaducados() {
 
 function persistir() {
   const config = storage.getConfig();
-  storage.setConfig({ ...config, liveUsers: [...enVivoAhora.entries()] });
+  return storage.setConfig({ ...config, liveUsers: [...enVivoAhora.entries()] });
 }
 
 async function actualizarEstado(guild) {
@@ -63,13 +63,13 @@ async function actualizarEstado(guild) {
 async function marcarEnVivo(guild, userId) {
   if (enVivoAhora.has(userId)) return;
   enVivoAhora.set(userId, Date.now());
-  persistir();
+  await persistir();
   await actualizarEstado(guild);
 }
 
 async function marcarOffline(guild, userId) {
   if (!enVivoAhora.delete(userId)) return;
-  persistir();
+  await persistir();
   await actualizarEstado(guild);
 }
 
@@ -79,12 +79,12 @@ async function restaurar(guild) {
   for (const [userId, desde] of storage.getConfig().liveUsers || []) {
     enVivoAhora.set(userId, desde);
   }
-  if (purgarCaducados()) persistir();
+  if (purgarCaducados()) await persistir();
   await actualizarEstado(guild);
 
   // Revisa cada 15 min por si alguien se dejo el stream abierto
   setInterval(() => {
-    if (purgarCaducados()) { persistir(); actualizarEstado(guild); }
+    if (purgarCaducados()) { persistir().then(() => actualizarEstado(guild)); }
   }, 15 * 60 * 1000);
 
   if (enVivoAhora.size) console.log(`[liveStatus] ${enVivoAhora.size} stream(s) seguian activos`);

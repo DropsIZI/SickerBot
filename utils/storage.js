@@ -87,27 +87,29 @@ async function init() {
 const getLevels = () => cacheLevels;
 const getUserData = userId => cacheLevels[userId] || { xp: 0, level: 0 };
 
-// Guarda un solo usuario: evita reescribir toda la coleccion en cada mensaje
+// Guarda un solo usuario: evita reescribir toda la coleccion en cada mensaje.
+// Devuelve la promesa de escritura para poder esperarla cuando haga falta;
+// quien no la espere se queda con la cache al dia igualmente.
 function setUserData(userId, data) {
   cacheLevels[userId] = data;
-  if (usandoMongo) {
-    colLevels.updateOne({ _id: userId }, { $set: data }, { upsert: true })
-      .catch(err => console.error('[storage] error guardando usuario:', err.message));
-  } else {
+  if (!usandoMongo) {
     escribirJSON(LEVELS_FILE, cacheLevels);
+    return Promise.resolve();
   }
+  return colLevels.updateOne({ _id: userId }, { $set: data }, { upsert: true })
+    .catch(err => console.error('[storage] error guardando usuario:', err.message));
 }
 
 const getConfig = () => cacheConfig;
 
 function setConfig(data) {
   cacheConfig = data;
-  if (usandoMongo) {
-    colConfig.updateOne({ _id: 'config' }, { $set: data }, { upsert: true })
-      .catch(err => console.error('[storage] error guardando config:', err.message));
-  } else {
+  if (!usandoMongo) {
     escribirJSON(CONFIG_FILE, cacheConfig);
+    return Promise.resolve();
   }
+  return colConfig.updateOne({ _id: 'config' }, { $set: data }, { upsert: true })
+    .catch(err => console.error('[storage] error guardando config:', err.message));
 }
 
 module.exports = { init, getLevels, getUserData, setUserData, getConfig, setConfig };
