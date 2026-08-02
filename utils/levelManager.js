@@ -1,26 +1,7 @@
-const fs = require('fs');
-const path = require('path');
+const storage = require('./storage');
 
-const LEVELS_FILE = path.join(__dirname, '../data/levels.json');
-const CONFIG_FILE = path.join(__dirname, '../data/config.json');
-
-function loadLevels() {
-  try { return JSON.parse(fs.readFileSync(LEVELS_FILE, 'utf8')); }
-  catch { return {}; }
-}
-
-function saveLevels(data) {
-  fs.writeFileSync(LEVELS_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
-
-function loadConfig() {
-  try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); }
-  catch { return { levelRoles: {}, levelUpChannel: null }; }
-}
-
-function saveConfig(data) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
+const loadConfig = () => storage.getConfig();
+const saveConfig = data => storage.setConfig(data);
 
 // XP necesaria para pasar del nivel N al N+1 (fórmula estilo MEE6)
 function xpForLevel(level) {
@@ -40,34 +21,28 @@ function setCooldown(userId) {
 }
 
 function addXP(userId, amount) {
-  const data = loadLevels();
-  if (!data[userId]) data[userId] = { xp: 0, level: 0 };
-
-  data[userId].xp += amount;
-
+  const actual = storage.getUserData(userId);
+  let xp = actual.xp + amount;
+  let level = actual.level;
   let leveledUp = false;
-  let newLevel = data[userId].level;
 
-  while (data[userId].xp >= xpForLevel(newLevel + 1)) {
-    data[userId].xp -= xpForLevel(newLevel + 1);
-    newLevel++;
+  while (xp >= xpForLevel(level + 1)) {
+    xp -= xpForLevel(level + 1);
+    level++;
     leveledUp = true;
   }
 
-  data[userId].level = newLevel;
-  saveLevels(data);
+  storage.setUserData(userId, { xp, level });
 
-  return { level: newLevel, xp: data[userId].xp, leveledUp };
+  return { level, xp, leveledUp };
 }
 
 function getUser(userId) {
-  const data = loadLevels();
-  return data[userId] || { xp: 0, level: 0 };
+  return storage.getUserData(userId);
 }
 
 function getLeaderboard() {
-  const data = loadLevels();
-  return Object.entries(data)
+  return Object.entries(storage.getLevels())
     .map(([id, d]) => ({ id, ...d }))
     .sort((a, b) => b.level - a.level || b.xp - a.xp)
     .slice(0, 10);

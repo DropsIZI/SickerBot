@@ -40,7 +40,14 @@ for (const file of eventFiles) {
 client.on('error', err => console.error('[Discord error]', err.message));
 process.on('unhandledRejection', err => console.error('[unhandledRejection]', err));
 
-client.login(process.env.DISCORD_TOKEN);
+// El almacenamiento se carga antes de conectar para que el primer mensaje
+// que llegue ya encuentre el XP en memoria
+require('./utils/storage').init()
+  .then(() => client.login(process.env.DISCORD_TOKEN))
+  .catch(err => {
+    console.error('[storage] error fatal al inicializar:', err);
+    process.exit(1);
+  });
 
 // Health check: Render asigna el puerto por la variable PORT
 const http = require('http');
