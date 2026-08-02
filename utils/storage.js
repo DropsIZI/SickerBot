@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const dns = require('dns');
 const { MongoClient } = require('mongodb');
 
 const LEVELS_FILE = path.join(__dirname, '../data/levels.json');
@@ -31,6 +32,25 @@ const escribirJSON = (file, data) => {
   catch (err) { console.error('[storage] no se pudo escribir ' + file + ':', err.message); }
 };
 
+// Las URIs mongodb+srv:// necesitan una consulta DNS de tipo SRV, que Node
+// hace contra los servidores del sistema en vez de usar el resolver de
+// Windows. Si esos servidores no responden (pasa con adblockers o VPNs que
+// dejan 127.0.0.1 configurado), falla solo Mongo mientras el resto del bot
+// conecta sin problema. En ese caso se reintenta con DNS publicos.
+async function conectar(uri) {
+  const opciones = { serverSelectionTimeoutMS: 15000 };
+  try {
+    return await new MongoClient(uri, opciones).connect();
+  } catch (err) {
+    const esFalloDeSrv = /querySrv|ECONNREFUSED|ESERVFAIL|ETIMEOUT/.test(err.message);
+    if (!esFalloDeSrv || !uri.startsWith('mongodb+srv://')) throw err;
+
+    console.warn('[storage] el DNS del sistema no resuelve SRV, reintentando con DNS publicos');
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+    return await new MongoClient(uri, opciones).connect();
+  }
+}
+
 async function init() {
   const uri = process.env.MONGODB_URI;
 
@@ -42,8 +62,7 @@ async function init() {
   }
 
   try {
-    const client = new MongoClient(uri, { serverSelectionTimeoutMS: 10000 });
-    await client.connect();
+    const client = await conectar(uri);
     const db = client.db(process.env.MONGODB_DB || 'sickerbot');
     colLevels = db.collection('levels');
     colConfig = db.collection('config');
