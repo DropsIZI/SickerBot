@@ -42,5 +42,8 @@ process.on('unhandledRejection', err => console.error('[unhandledRejection]', er
 
 client.login(process.env.DISCORD_TOKEN);
 
+// Health check: Render asigna el puerto por la variable PORT
 const http = require('http');
-http.createServer((req, res) => res.writeHead(200).end('OK')).listen(8080);
+const PORT = process.env.PORT || 8080;
+http.createServer((req, res) => res.writeHead(200).end('OK'))
+  .listen(PORT, () => console.log(`[health] escuchando en el puerto ${PORT}`));
