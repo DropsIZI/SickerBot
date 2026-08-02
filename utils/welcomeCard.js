@@ -9,18 +9,36 @@ if (fs.existsSync(FONT_PATH)) {
 
 const BG_PATH = path.join(__dirname, '../assets/welcome-bg.png');
 
-// 1280x450px — proporción similar a la imagen de referencia
-const W = 1280, H = 450;
+// 16:9, misma proporción que assets/welcome-bg.png (1672x941) para no deformarla
+const W = 1280, H = 720;
+
+// Posiciones en fracciones del lienzo, medidas sobre el fondo:
+// el avatar va dentro del agujero del donut y el texto en el hueco
+// que queda entre el donut y la chica.
+const DONUT = { cx: 0.234, cy: 0.489, hueco: 0.086 }; // hueco = radio, fracción del ancho
+const TEXTO = { cx: 0.540, maxAncho: 0.29 };          // maxAncho, fracción del ancho
+
+// Reduce la fuente hasta que el texto quepa en el ancho disponible
+function ajustarFuente(ctx, texto, tamMax, maxAncho) {
+  let tam = tamMax;
+  do {
+    ctx.font = `bold ${tam}px Roboto`;
+    if (ctx.measureText(texto).width <= maxAncho) break;
+    tam -= 2;
+  } while (tam > 20);
+  return tam;
+}
 
 async function generateWelcomeCard(member) {
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
-  // Fondo: imagen personalizada o degradado rosa si no existe
+  let hayFondo = true;
   try {
     const bg = await loadImage(BG_PATH);
     ctx.drawImage(bg, 0, 0, W, H);
   } catch {
+    hayFondo = false;
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, '#FFE0EB');
     grad.addColorStop(0.5, '#FFC8DD');
@@ -29,75 +47,57 @@ async function generateWelcomeCard(member) {
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Overlay oscuro suave en zona del texto
-  const textOverlay = ctx.createLinearGradient(W * 0.25, 0, W * 0.75, 0);
-  textOverlay.addColorStop(0, 'rgba(255,180,200,0)');
-  textOverlay.addColorStop(0.3, 'rgba(255,200,215,0.55)');
-  textOverlay.addColorStop(0.7, 'rgba(255,200,215,0.55)');
-  textOverlay.addColorStop(1, 'rgba(255,180,200,0)');
-  ctx.fillStyle = textOverlay;
-  ctx.fillRect(0, 0, W, H);
+  // --- Avatar dentro del agujero del donut ---
+  const radio = W * DONUT.hueco;
+  const avatarCX = W * DONUT.cx;
+  const avatarCY = H * DONUT.cy;
 
-  // Avatar circular centrado (zona del donut en la imagen de referencia)
-  const avatarSize = 210;
-  const avatarCX = W * 0.27;
-  const avatarCY = H / 2;
-
-  // Glow rosa
-  ctx.shadowColor = '#FF85A1';
-  ctx.shadowBlur = 30;
-  ctx.beginPath();
-  ctx.arc(avatarCX, avatarCY, avatarSize / 2 + 6, 0, Math.PI * 2);
-  ctx.strokeStyle = '#FF85A1';
-  ctx.lineWidth = 6;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // Clip circular avatar
   ctx.save();
   ctx.beginPath();
-  ctx.arc(avatarCX, avatarCY, avatarSize / 2, 0, Math.PI * 2);
+  ctx.arc(avatarCX, avatarCY, radio, 0, Math.PI * 2);
   ctx.clip();
   try {
     const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 512 });
     const avatar = await loadImage(avatarUrl);
-    ctx.drawImage(avatar, avatarCX - avatarSize / 2, avatarCY - avatarSize / 2, avatarSize, avatarSize);
+    ctx.drawImage(avatar, avatarCX - radio, avatarCY - radio, radio * 2, radio * 2);
   } catch {
     ctx.fillStyle = '#FFB3C6';
-    ctx.fillRect(avatarCX - avatarSize / 2, avatarCY - avatarSize / 2, avatarSize, avatarSize);
+    ctx.fillRect(avatarCX - radio, avatarCY - radio, radio * 2, radio * 2);
   }
   ctx.restore();
 
-  // Texto central
-  const textCX = W * 0.55;
+  // Borde suave para separar el avatar de la masa del donut
+  ctx.beginPath();
+  ctx.arc(avatarCX, avatarCY, radio, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 5;
+  ctx.stroke();
 
-  // "¡Bienvenida/o a"
-  ctx.font = '28px Roboto';
-  ctx.fillStyle = '#8B4560';
+  // --- Texto ---
+  const textCX = W * TEXTO.cx;
+  const maxAncho = W * TEXTO.maxAncho;
   ctx.textAlign = 'center';
-  ctx.fillText('¡Bienvenid@ a', textCX, H / 2 - 70);
 
-  // Nombre del servidor
-  ctx.font = 'bold 22px Roboto';
-  ctx.fillStyle = '#C2556E';
-  ctx.fillText('Sick Community 🍩', textCX, H / 2 - 38);
+  // Si falta el fondo, el degradado no trae los títulos: se dibujan aquí
+  if (!hayFondo) {
+    ctx.font = 'bold 34px Roboto';
+    ctx.fillStyle = '#C2556E';
+    ctx.fillText('¡Bienvenid@ a Sick Community!', textCX, H * 0.36);
+  }
 
-  // Separador decorativo
-  ctx.fillStyle = '#FF85A1';
-  ctx.fillRect(textCX - 80, H / 2 - 22, 160, 3);
-
-  // Nombre del usuario (grande)
-  ctx.font = 'bold 58px Roboto';
-  ctx.fillStyle = '#5C1F35';
-  ctx.shadowColor = 'rgba(255,133,161,0.5)';
-  ctx.shadowBlur = 10;
-  ctx.fillText(member.user.username, textCX, H / 2 + 40);
+  // Nombre del usuario, en el hueco bajo "Bienvenida Rosquita"
+  const nombre = member.user.username;
+  ajustarFuente(ctx, nombre, 52, maxAncho);
+  ctx.fillStyle = '#6B4A3A';
+  ctx.shadowColor = 'rgba(255,255,255,0.9)';
+  ctx.shadowBlur = 8;
+  ctx.fillText(nombre, textCX, H * 0.60);
   ctx.shadowBlur = 0;
 
-  // Miembro número X
-  ctx.font = '22px Roboto';
-  ctx.fillStyle = '#A0526A';
-  ctx.fillText(`Miembro #${member.guild.memberCount} 🎀`, textCX, H / 2 + 80);
+  // Contador de miembros. Sin emoji: Roboto no los trae y saldría un cuadro vacío
+  ctx.font = 'bold 26px Roboto';
+  ctx.fillStyle = '#D96A93';
+  ctx.fillText(`Miembro #${member.guild.memberCount}`, textCX, H * 0.68);
 
   ctx.textAlign = 'left';
   return canvas.toBuffer('image/png');
