@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getLinks } = require('../utils/streamStore');
+const { marcarEnVivo } = require('../utils/liveStatus');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -48,6 +49,13 @@ module.exports = {
       embeds: [embed],
     });
 
-    await interaction.reply({ content: '✅ ¡Notificación enviada! 🎉', ephemeral: true });
+    // TikTok y Kick no los detecta Discord, asi que este comando es tambien
+    // el que enciende el canal y la categoria de "en vivo"
+    await marcarEnVivo(interaction.guild, interaction.user.id);
+
+    await interaction.reply({
+      content: '✅ ¡Notificación enviada! 🎉\nEl canal ya aparece en vivo. Usa `/fin-stream` al terminar.',
+      ephemeral: true,
+    });
   },
 };
