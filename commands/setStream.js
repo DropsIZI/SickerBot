@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { streamLinks } = require('../utils/streamStore');
+const { streamLinks, getLinks } = require('../utils/streamStore');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -32,7 +32,7 @@ module.exports = {
     if (!streamLinks.has(interaction.user.id)) streamLinks.set(interaction.user.id, new Map());
     streamLinks.get(interaction.user.id).set(plataforma, link);
 
-    const todos = [...streamLinks.get(interaction.user.id).entries()]
+    const todos = [...getLinks(interaction.user.id).entries()]
       .map(([p, l]) => `**${p}:** ${l}`).join('\n');
 
     await interaction.reply({

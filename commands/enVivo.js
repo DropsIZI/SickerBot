@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { streamLinks } = require('../utils/streamStore');
+const { getLinks } = require('../utils/streamStore');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,8 +15,8 @@ module.exports = {
       return interaction.reply({ content: '❌ Necesitas el rol de Streamer para usar este comando.', ephemeral: true });
     }
 
-    const links = streamLinks.get(interaction.user.id);
-    if (!links || links.size === 0) {
+    const links = getLinks(interaction.user.id);
+    if (links.size === 0) {
       return interaction.reply({ content: '❌ Primero configura tus links con `/set-stream`.', ephemeral: true });
     }
 

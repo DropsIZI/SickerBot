@@ -1,5 +1,5 @@
 const { ActivityType, EmbedBuilder } = require('discord.js');
-const { streamLinks } = require('../utils/streamStore');
+const { getLinks } = require('../utils/streamStore');
 const { marcarEnVivo, marcarOffline } = require('../utils/liveStatus');
 
 // userId -> timestamp del último aviso, para no repetir si la presencia parpadea
@@ -50,8 +50,8 @@ module.exports = {
     const categoria = ahora.state;
 
     // Link que reporta Discord (Twitch/YouTube) + los guardados con /set-stream
-    const links = streamLinks.get(member.id);
-    const extras = links && links.size
+    const links = getLinks(member.id);
+    const extras = links.size
       ? [...links.entries()].map(([p, l]) => `> 🔗 **${p}:** ${l}`).join('\n')
       : null;
 
