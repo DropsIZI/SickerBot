@@ -1,0 +1,15 @@
+{
+  "name": "sicker-bot",
+  "version": "1.0.0",
+  "description": "Bot de Discord para la VTuber Sick — niveles, bienvenidas, moderación y streams",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.99",
+    "discord.js": "^14.25.1",
+    "dotenv": "^16.4.5"
+  }
+}
