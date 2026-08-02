@@ -9,6 +9,16 @@ const LINKS_FIJOS = {
   },
 };
 
+// Cuentas que el bot sondea para saber si hay directo, ya que Discord solo
+// avisa de Twitch y YouTube. Clave: userId de Discord.
+const VIGILAR = {
+  // Sick
+  '763864924500787240': {
+    tiktok: 'sickonfire',   // el @ del perfil, sin arroba
+    kick: 'sickonfire',     // el nombre que aparece en kick.com/<slug>
+  },
+};
+
 // Links añadidos en caliente con /set-stream. userId -> Map(plataforma -> link)
 // Estos si se pierden al reiniciar; los de arriba no.
 const streamLinks = new Map();
@@ -23,4 +33,4 @@ function getLinks(userId) {
   return out;
 }
 
-module.exports = { streamLinks, getLinks, LINKS_FIJOS };
+module.exports = { streamLinks, getLinks, LINKS_FIJOS, VIGILAR };

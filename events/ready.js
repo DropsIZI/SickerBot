@@ -10,6 +10,8 @@ module.exports = {
     if (guild) {
       await require('../utils/liveStatus').restaurar(guild)
         .catch(err => console.error('[liveStatus] error al restaurar:', err.message));
+
+      require('../utils/streamWatcher').iniciar(guild);
     }
   },
 };
