@@ -12,6 +12,10 @@ module.exports = {
         .catch(err => console.error('[liveStatus] error al restaurar:', err.message));
 
       require('../utils/streamWatcher').iniciar(guild);
+
+      // Necesita la lista completa de miembros para no contar solo los cacheados
+      await guild.members.fetch().catch(() => {});
+      require('../utils/memberCounter').iniciar(guild);
     }
   },
 };
