@@ -9,6 +9,10 @@ module.exports = {
     .setName('autoroles')
     .setDescription('Crea los roles y publica los menús para que cada quien elija')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addAttachmentOption(o =>
+      o.setName('banner')
+        .setDescription('Imagen de cabecera que se publica encima de los menús')
+    )
     .addStringOption(o =>
       o.setName('seccion')
         .setDescription('Solo una sección (por defecto se publican todas)')
@@ -28,6 +32,15 @@ module.exports = {
 
     const soloUna = interaction.options.getString('seccion');
     const ids = soloUna ? [soloUna] : Object.keys(GRUPOS);
+
+    // Cabecera con la imagen, antes de los desplegables
+    const banner = interaction.options.getAttachment('banner');
+    if (banner) {
+      if (!banner.contentType?.startsWith('image/')) {
+        return interaction.editReply('❌ El banner tiene que ser una imagen.');
+      }
+      await interaction.channel.send({ files: [banner.url] });
+    }
 
     let creados = 0;
     const resumen = [];
