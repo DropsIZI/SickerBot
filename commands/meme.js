@@ -19,7 +19,7 @@ module.exports = {
 
     if (!post) return interaction.editReply('❌ No encontré ninguno nuevo. Prueba de nuevo en un rato.');
 
-    const { embedDe } = require('../utils/redditWatcher');
-    await interaction.editReply({ embeds: [embedDe(post)] });
+    const { mensajeDe } = require('../utils/redditWatcher');
+    await interaction.editReply(mensajeDe(post));
   },
 };

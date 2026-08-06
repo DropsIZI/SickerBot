@@ -10,8 +10,8 @@ const storage = require('./storage');
 
 const UA = 'SickerBot/1.0 (Discord bot para la comunidad de Sick)';
 const INTERVALO_MS = 30 * 60 * 1000;
-const POR_VUELTA = 2;      // total por vuelta, no por subreddit: con seis
-                           // fuentes, dos de cada una llenarian el canal
+const POR_VUELTA = 4;      // total por vuelta, no por subreddit: con diez
+                           // fuentes, varias de cada una llenarian el canal
 const MEMORIA = 300;       // ids recordados para no repetir
 
 // Subreddits vigilados. Todos en espanol: los memes llevan el texto dentro
@@ -24,6 +24,10 @@ const FUENTES = [
   'memexico',
   'dankgentina',
   'yo_elvr',
+  'AdolescentesLATAM',
+  'BeelcitosMemes',
+  'Anime_En_General',
+  'LeagueOfLegendsLatino',
 ];
 
 let token = { valor: null, expira: 0 };
@@ -54,7 +58,6 @@ async function getToken() {
   return token.valor;
 }
 
-// Solo imagenes: los enlaces a videos o galerias no se ven bien en un embed
 const esImagen = url => /\.(jpe?g|png|gif)$/i.test(url || '');
 
 const usaOAuth = () =>
@@ -72,11 +75,12 @@ async function traerOAuth(subreddit, limite) {
 
   return (await res.json()).data.children
     .map(c => c.data)
-    .filter(p => !p.stickied && !p.over_18 && esImagen(p.url))
+    .filter(p => !p.stickied && !p.over_18 && (esImagen(p.url) || p.is_video))
     .map(p => ({
       id: p.id,
       titulo: p.title,
-      imagen: p.url,
+      imagen: p.is_video ? null : p.url,
+      video: p.is_video,
       enlace: 'https://reddit.com' + p.permalink,
       sub: p.subreddit_name_prefixed,
       autor: p.author,
@@ -112,12 +116,22 @@ const traer = (subreddit, limite = 25) =>
   usaOAuth() ? traerOAuth(subreddit, limite) : traerPublico(subreddit, limite);
 
 function embedDe(post) {
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setColor(0xFF4500)
     .setTitle(post.titulo.slice(0, 250))
     .setURL(post.enlace)
-    .setImage(post.imagen)
     .setFooter({ text: `${post.sub} · u/${post.autor} · ▲ ${post.votos}` });
+
+  if (post.imagen) embed.setImage(post.imagen);
+  return embed;
+}
+
+// Un embed propio no puede reproducir video, asi que en ese caso se manda el
+// enlace suelto y es Discord quien genera el reproductor.
+function mensajeDe(post) {
+  return post.video
+    ? { content: `**${post.titulo.slice(0, 200)}**\n${post.enlace}` }
+    : { embeds: [embedDe(post)] };
 }
 
 const vistos = () => storage.getConfig().redditVistos || [];
@@ -166,7 +180,7 @@ async function revisar(guild) {
     }
 
     for (const post of posts.slice(0, POR_VUELTA - publicados.length)) {
-      await canal.send({ embeds: [embedDe(post)] })
+      await canal.send(mensajeDe(post))
         .catch(err => console.error('[reddit] no se pudo publicar:', err.message));
       publicados.push(post.id);
     }
@@ -186,4 +200,4 @@ function iniciar(guild) {
   setInterval(vuelta, INTERVALO_MS);
 }
 
-module.exports = { iniciar, unoNuevo, embedDe, FUENTES };
+module.exports = { iniciar, unoNuevo, embedDe, mensajeDe, FUENTES };
