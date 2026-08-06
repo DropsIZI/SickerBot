@@ -1,6 +1,53 @@
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction, client) {
+    // Formulario de /poema
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('modal-poema:')) {
+      const { EmbedBuilder } = require('discord.js');
+      const anonimo = interaction.customId.endsWith(':anon');
+
+      try {
+        await interaction.deferReply({ ephemeral: true });
+
+        const titulo = interaction.fields.getTextInputValue('titulo').trim();
+        const texto = interaction.fields.getTextInputValue('texto').trim();
+
+        const embed = new EmbedBuilder()
+          .setColor(0xC77DFF)
+          .setTitle(`✍️  ${titulo}`)
+          .setDescription(texto)
+          .setTimestamp();
+
+        if (anonimo) {
+          embed.setFooter({ text: 'Publicado de forma anónima' });
+        } else {
+          embed.setFooter({
+            text: `Por ${interaction.user.username}`,
+            iconURL: interaction.user.displayAvatarURL({ extension: 'png', size: 64 }),
+          });
+        }
+
+        const { loadConfig } = require('../utils/levelManager');
+        const canalId = loadConfig().poemasChannel;
+        const destino = canalId
+          ? await interaction.guild.channels.fetch(canalId).catch(() => null)
+          : interaction.channel;
+
+        if (!destino) {
+          return interaction.editReply('❌ El canal de poemas ya no existe. Configúralo con `/set-canal-poemas`.');
+        }
+
+        await destino.send({ embeds: [embed] });
+        return interaction.editReply(
+          anonimo ? '✅ Tu poema se publicó de forma anónima.' : `✅ Poema publicado en ${destino}.`
+        );
+      } catch (err) {
+        console.error('[modal-poema]', err);
+        const msg = '❌ No pude publicar el poema.';
+        return interaction.deferred ? interaction.editReply(msg) : interaction.reply({ content: msg, ephemeral: true });
+      }
+    }
+
     // Menus de autoroles: deja al miembro exactamente con lo que marco
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith('autorol:')) {
       const { GRUPOS, nombreRol, rolesDeGrupo } = require('../utils/autoroles');
