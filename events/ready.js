@@ -16,6 +16,7 @@ module.exports = {
       // Necesita la lista completa de miembros para no contar solo los cacheados
       await guild.members.fetch().catch(() => {});
       require('../utils/memberCounter').iniciar(guild);
+      require('../utils/redditWatcher').iniciar(guild);
     }
   },
 };
