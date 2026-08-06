@@ -6,6 +6,7 @@ const {
   consejoDe, lecturaDe, sintesisDe, lecturaConjunta, apertura,
 } = require('../utils/tarot');
 const { loadConfig } = require('../utils/levelManager');
+const { detectarTema } = require('../utils/tarotTemas');
 
 const DIR_CARTAS = path.join(__dirname, '../assets/tarot');
 const POSICIONES = ['🕰️ Pasado', '✨ Presente', '🔮 Futuro'];
@@ -103,6 +104,13 @@ module.exports = {
       const { embed, imagen } = embedCarta(sacada, tipo === 'dia' ? '🌙 Tu carta de hoy' : '🃏 Tu carta');
       embeds.push(embed);
       if (imagen) ficheros.push(new AttachmentBuilder(imagen));
+    }
+
+    // Nota acorde al asunto que se consulta, si se reconoce alguno
+    const tema = detectarTema(pregunta);
+    if (tema) {
+      const nota = tema.notas[Math.floor(Math.random() * tema.notas.length)];
+      embeds[embeds.length - 1].addFields({ name: tema.titulo, value: `> ${nota}` });
     }
 
     embeds[embeds.length - 1].setFooter({
