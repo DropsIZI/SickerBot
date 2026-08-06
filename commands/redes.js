@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder,
   ActionRowBuilder, ButtonBuilder, ButtonStyle,
 } = require('discord.js');
-const { REDES } = require('../utils/redes');
+const { REDES, textoHorario } = require('../utils/redes');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -32,6 +32,7 @@ module.exports = {
         'Sígueme en todas para no perderte nada 🍩\n' +
         'Los directos los aviso por aquí en cuanto empiezan ✨'
       )
+      .addFields({ name: '🕐 Horario de directos', value: textoHorario() })
       .setFooter({ text: 'SickerBot 🍩 • Comunidad Rosquita' });
 
     if (banner) embed.setImage(banner.url);

@@ -10,4 +10,48 @@ const REDES = [
   { nombre: 'X', emoji: '🐦', url: 'https://x.com/sickonfirex' },
 ];
 
-module.exports = { REDES };
+// Horario de directos, en hora de Peru (GMT-5), todos los dias.
+const HORARIO = {
+  dias: 'Todos los días',
+  zonaBase: 'hora de Perú',
+  bloques: [
+    { nombre: '☀️ Mediodía', ini: 11, fin: 13.5 },
+    { nombre: '🌙 Noche', ini: 19.5, fin: 23.5 },
+  ],
+  // Desfase respecto a Peru. Chile y Espana cambian con el horario de
+  // verano, asi que estos valores son los de su horario estandar.
+  zonas: [
+    { banderas: '🇵🇪 🇨🇴 🇪🇨 🇵🇦', desfase: 0 },
+    { banderas: '🇲🇽 🇬🇹 🇸🇻 🇭🇳 🇳🇮 🇨🇷', desfase: -1 },
+    { banderas: '🇧🇴 🇻🇪 🇨🇱 🇩🇴 🇵🇷 🇨🇺', desfase: 1 },
+    { banderas: '🇦🇷 🇺🇾 🇵🇾 🇧🇷', desfase: 2 },
+    { banderas: '🇪🇸', desfase: 6 },
+  ],
+};
+
+// 13.5 -> "13:30". Si pasa de medianoche marca que es del dia siguiente.
+function formatoHora(h) {
+  let sufijo = '';
+  if (h >= 24) { h -= 24; sufijo = '⁺¹'; }
+  const horas = Math.floor(h);
+  const minutos = Math.round((h - horas) * 60);
+  return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}${sufijo}`;
+}
+
+const tramo = (bloque, desfase) =>
+  `${formatoHora(bloque.ini + desfase)}–${formatoHora(bloque.fin + desfase)}`;
+
+function textoHorario() {
+  const cabecera =
+    `**${HORARIO.dias}**\n` +
+    HORARIO.bloques.map(b => `${b.nombre}  \`${tramo(b, 0)}\``).join('   ') +
+    `  · ${HORARIO.zonaBase}\n`;
+
+  const tabla = HORARIO.zonas
+    .map(z => `${z.banderas}\n\`${HORARIO.bloques.map(b => tramo(b, z.desfase)).join('\`  \`')}\``)
+    .join('\n');
+
+  return `${cabecera}\n${tabla}\n\n-# ⁺¹ es la madrugada del día siguiente`;
+}
+
+module.exports = { REDES, HORARIO, textoHorario };
