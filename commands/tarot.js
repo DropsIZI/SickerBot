@@ -1,7 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { cartaDelDia, cartaAlAzar, tirada } = require('../utils/tarot');
+const {
+  cartaDelDia, cartaAlAzar, tirada,
+  consejoDe, lecturaConjunta, apertura,
+} = require('../utils/tarot');
 const { loadConfig } = require('../utils/levelManager');
 
 const DIR_CARTAS = path.join(__dirname, '../assets/tarot');
@@ -16,7 +19,8 @@ function buscarImagen(slug) {
   return null;
 }
 
-function embedCarta({ carta, invertida }, titulo) {
+function embedCarta(sacada, titulo) {
+  const { carta, invertida } = sacada;
   const p = invertida ? 'i' : 'd';
 
   const embed = new EmbedBuilder()
@@ -24,6 +28,9 @@ function embedCarta({ carta, invertida }, titulo) {
     .setTitle(`${carta.emoji}  ${carta.nombre}${invertida ? '  · invertida' : ''}`)
     .setDescription(`*${carta.clave[p]}*\n\n${carta.lectura[p]}`)
     .addFields({ name: 'En síntesis', value: `> ${carta.corto[p]}` });
+
+  const consejo = consejoDe(sacada);
+  if (consejo) embed.addFields({ name: 'Consejo', value: `> ${consejo}` });
 
   if (titulo) embed.setAuthor({ name: titulo });
 
@@ -70,11 +77,18 @@ module.exports = {
     const ficheros = [];
 
     if (tipo === 'tres') {
-      tirada(3).forEach((sacada, i) => {
+      const sacadas = tirada(3);
+      sacadas.forEach((sacada, i) => {
         const { embed, imagen } = embedCarta(sacada, POSICIONES[i]);
         embeds.push(embed);
         if (imagen) ficheros.push(new AttachmentBuilder(imagen));
       });
+
+      // Cierre que lee las tres cartas como un solo mensaje
+      embeds.push(new EmbedBuilder()
+        .setColor(0x4A3B6B)
+        .setTitle('🕯️  Lectura conjunta')
+        .setDescription(lecturaConjunta(sacadas)));
     } else {
       const sacada = tipo === 'dia' ? cartaDelDia(usuario.id) : cartaAlAzar();
       const { embed, imagen } = embedCarta(sacada, tipo === 'dia' ? '🌙 Tu carta de hoy' : '🃏 Tu carta');
@@ -89,8 +103,8 @@ module.exports = {
     });
 
     const cabecera = pregunta
-      ? `🔮 **${usuario.username}** consulta: *${pregunta}*`
-      : `🔮 Lectura para **${usuario.username}**`;
+      ? `🔮 **${usuario.username}** consulta: *${pregunta}*\n${apertura()}`
+      : `🔮 Lectura para **${usuario.username}**\n${apertura()}`;
 
     await interaction.editReply({ content: cabecera, embeds, files: ficheros });
   },

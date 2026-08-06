@@ -239,4 +239,46 @@ function tirada(cantidad) {
   return salida;
 }
 
-module.exports = { CARTAS, cartaDelDia, cartaAlAzar, tirada };
+const { TEXTOS, APERTURAS, TONO_CONJUNTO, CIERRES } = require('./tarotTextos');
+
+const alAzar = arr => arr[crypto.randomInt(arr.length)];
+
+const apertura = () => alAzar(APERTURAS);
+
+// Consejo de la carta, distinto cada vez que sale
+function consejoDe({ carta, invertida }) {
+  const t = TEXTOS[carta.slug];
+  if (!t) return null;
+  return alAzar(t.consejo[invertida ? 'i' : 'd']);
+}
+
+const ejeDe = ({ carta, invertida }) =>
+  TEXTOS[carta.slug]?.eje[invertida ? 'i' : 'd'] || null;
+
+// Redacta la lectura de las tres cartas como un solo mensaje, encadenando
+// el eje de cada una en su posicion y ajustando el tono al numero de
+// cartas invertidas.
+function lecturaConjunta(sacadas) {
+  const invertidas = sacadas.filter(s => s.invertida).length;
+  const ejes = sacadas.map(ejeDe);
+
+  const partes = [alAzar(TONO_CONJUNTO[invertidas])];
+
+  if (ejes.every(Boolean)) {
+    partes.push(
+      `Detrás quedó ${ejes[0]}, que explica el punto de partida. ` +
+      `El presente se sostiene sobre ${ejes[1]}, y ahí es donde se juega la decisión. ` +
+      `Hacia adelante se perfila ${ejes[2]}.`
+    );
+  }
+
+  const tono = invertidas === 0 ? 'favorable' : invertidas >= 2 ? 'exigente' : 'mixto';
+  partes.push(alAzar(CIERRES[tono]));
+
+  return partes.join('\n\n');
+}
+
+module.exports = {
+  CARTAS, cartaDelDia, cartaAlAzar, tirada,
+  consejoDe, lecturaConjunta, apertura,
+};
