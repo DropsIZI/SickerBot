@@ -47,7 +47,12 @@ async function getToken() {
 // Solo imagenes: los enlaces a videos o galerias no se ven bien en un embed
 const esImagen = url => /\.(jpe?g|png|gif)$/i.test(url || '');
 
-async function traer(subreddit, limite = 25) {
+const usaOAuth = () =>
+  Boolean(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET);
+
+// Via oficial. Necesita credenciales, que ya solo se dan tras registrarse
+// y aceptar la politica de Reddit.
+async function traerOAuth(subreddit, limite) {
   const t = await getToken();
   const res = await fetch(
     `https://oauth.reddit.com/r/${subreddit}/hot?limit=${limite}&raw_json=1`,
@@ -68,6 +73,33 @@ async function traer(subreddit, limite = 25) {
       votos: p.ups,
     }));
 }
+
+// Via por defecto: un servicio publico que ya sirve las publicaciones de
+// Reddit filtradas, sin credenciales ni registro. Al depender de un tercero
+// puede caerse, y por eso se conserva la via oficial como alternativa.
+async function traerPublico(subreddit, limite) {
+  const res = await fetch(
+    `https://meme-api.com/gimme/${subreddit}/${Math.min(limite, 50)}`,
+    { headers: { 'User-Agent': UA } }
+  );
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+
+  const json = await res.json();
+  return (json.memes || [json])
+    .filter(m => m && !m.nsfw && !m.spoiler && esImagen(m.url))
+    .map(m => ({
+      id: (m.postLink || '').split('/').pop(),
+      titulo: m.title,
+      imagen: m.url,
+      enlace: m.postLink,
+      sub: 'r/' + m.subreddit,
+      autor: m.author,
+      votos: m.ups,
+    }));
+}
+
+const traer = (subreddit, limite = 25) =>
+  usaOAuth() ? traerOAuth(subreddit, limite) : traerPublico(subreddit, limite);
 
 function embedDe(post) {
   return new EmbedBuilder()
@@ -131,12 +163,8 @@ async function revisar(guild) {
 }
 
 function iniciar(guild) {
-  if (!process.env.REDDIT_CLIENT_ID || !process.env.REDDIT_CLIENT_SECRET) {
-    console.log('[reddit] sin credenciales, los memes automaticos quedan desactivados');
-    return;
-  }
-
-  console.log(`[reddit] vigilando ${FUENTES.join(', ')} cada ${INTERVALO_MS / 60000} min`);
+  const via = usaOAuth() ? 'API oficial' : 'servicio público';
+  console.log(`[reddit] vigilando ${FUENTES.join(', ')} cada ${INTERVALO_MS / 60000} min (${via})`);
   const vuelta = () => revisar(guild).catch(err => console.error('[reddit]', err.message));
   vuelta();
   setInterval(vuelta, INTERVALO_MS);

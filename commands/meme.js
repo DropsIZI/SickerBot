@@ -7,13 +7,6 @@ module.exports = {
     .setDescription('Trae un meme de Reddit al momento'),
 
   async execute(interaction) {
-    if (!process.env.REDDIT_CLIENT_ID) {
-      return interaction.reply({
-        content: '❌ Faltan las credenciales de Reddit. Un admin debe configurarlas.',
-        ephemeral: true,
-      });
-    }
-
     await interaction.deferReply();
 
     let post;
