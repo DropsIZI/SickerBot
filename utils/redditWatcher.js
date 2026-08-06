@@ -13,8 +13,17 @@ const INTERVALO_MS = 20 * 60 * 1000;
 const POR_VUELTA = 2;      // como mucho 2 publicaciones por subreddit y vuelta
 const MEMORIA = 300;       // ids recordados para no repetir
 
-// Subreddits vigilados. Editar aqui para anadir o quitar.
-const FUENTES = ['memes', 'dankmemes', 'meme'];
+// Subreddits vigilados. Todos en espanol: los memes llevan el texto dentro
+// de la imagen, asi que el idioma del subreddit es el idioma del meme.
+// Editar aqui para anadir o quitar.
+const FUENTES = [
+  'SpanishMeme',
+  'MemesEnEspanol',
+  'MemesESP',
+  'memexico',
+  'dankgentina',
+  'yo_elvr',
+];
 
 let token = { valor: null, expira: 0 };
 
