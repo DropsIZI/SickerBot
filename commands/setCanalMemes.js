@@ -21,7 +21,7 @@ module.exports = {
 
     await interaction.reply({
       content: canal
-        ? `✅ Publicaré memes en ${canal} cada 20 minutos.\n` +
+        ? `✅ Publicaré **2 memes cada 30 minutos** en ${canal} (unos 96 al día).\n` +
           `Fuentes: ${FUENTES.map(f => '`r/' + f + '`').join(', ')}`
         : '✅ Memes automáticos desactivados. `/meme` sigue funcionando.',
       ephemeral: true,

@@ -9,8 +9,9 @@ const { EmbedBuilder } = require('discord.js');
 const storage = require('./storage');
 
 const UA = 'SickerBot/1.0 (Discord bot para la comunidad de Sick)';
-const INTERVALO_MS = 20 * 60 * 1000;
-const POR_VUELTA = 2;      // como mucho 2 publicaciones por subreddit y vuelta
+const INTERVALO_MS = 30 * 60 * 1000;
+const POR_VUELTA = 2;      // total por vuelta, no por subreddit: con seis
+                           // fuentes, dos de cada una llenarian el canal
 const MEMORIA = 300;       // ids recordados para no repetir
 
 // Subreddits vigilados. Todos en espanol: los memes llevan el texto dentro
@@ -149,16 +150,22 @@ async function revisar(guild) {
   const yaVistos = new Set(vistos());
   const publicados = [];
 
-  for (const sub of FUENTES) {
+  // Se recorren las fuentes en orden aleatorio y se corta al llegar al tope,
+  // de modo que a lo largo del dia salgan de todas sin depender del orden
+  const orden = [...FUENTES].sort(() => Math.random() - 0.5);
+
+  for (const sub of orden) {
+    if (publicados.length >= POR_VUELTA) break;
+
     let posts;
     try {
-      posts = (await traer(sub)).filter(p => !yaVistos.has(p.id)).slice(0, POR_VUELTA);
+      posts = (await traer(sub)).filter(p => !yaVistos.has(p.id));
     } catch (err) {
       console.error(`[reddit] ${sub}:`, err.message);
       continue;
     }
 
-    for (const post of posts) {
+    for (const post of posts.slice(0, POR_VUELTA - publicados.length)) {
       await canal.send({ embeds: [embedDe(post)] })
         .catch(err => console.error('[reddit] no se pudo publicar:', err.message));
       publicados.push(post.id);
