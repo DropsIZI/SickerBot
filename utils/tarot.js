@@ -71,7 +71,7 @@ const CARTAS = [
     },
   },
   {
-    n: 7, slug: 'el-carro', nombre: 'El Carro', emoji: '🏆',
+    n: 7, slug: 'el-carruaje', nombre: 'El Carruaje', emoji: '🏆',
     clave: { d: 'Avance · Determinación · Triunfo', i: 'Dispersión · Fuerzas opuestas' },
     corto: { d: 'El avance está en marcha; sostenlo.', i: 'Demasiados frentes a la vez.' },
     lectura: {
@@ -134,7 +134,7 @@ const CARTAS = [
     },
   },
   {
-    n: 14, slug: 'la-templanza', nombre: 'La Templanza', emoji: '🍵',
+    n: 14, slug: 'la-balanza', nombre: 'La Balanza', emoji: '🍵',
     clave: { d: 'Equilibrio · Paciencia · Medida', i: 'Excesos · Impaciencia' },
     corto: { d: 'Vas al ritmo correcto.', i: 'Oscilas entre extremos.' },
     lectura: {

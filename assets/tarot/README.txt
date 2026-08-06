@@ -12,14 +12,14 @@ Tamano recomendado: 500x800 px (proporcion de carta 5:8).
   el-emperador.png        👑 El Emperador
   el-sumo-sacerdote.png   📜 El Sumo Sacerdote
   los-enamorados.png      💕 Los Enamorados
-  el-carro.png            🏆 El Carro
+  el-carruaje.png         🏆 El Carruaje
   la-fuerza.png           🦁 La Fuerza
   el-ermitano.png         🕯️ El Ermitaño
   la-rueda.png            🎡 La Rueda de la Fortuna
   la-justicia.png         ⚖️ La Justicia
   el-colgado.png          🙃 El Colgado
   la-muerte.png           🦋 La Muerte
-  la-templanza.png        🍵 La Templanza
+  la-balanza.png          🍵 La Balanza
   el-diablo.png           😈 El Diablo
   la-torre.png            ⚡ La Torre
   la-estrella.png         ⭐ La Estrella
