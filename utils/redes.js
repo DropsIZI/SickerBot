@@ -5,6 +5,9 @@
 const REDES = [
   { nombre: 'TikTok', emoji: '🎵', url: 'https://www.tiktok.com/@sickonfire' },
   { nombre: 'Kick', emoji: '🟢', url: 'https://kick.com/sickonfire' },
+  { nombre: 'YouTube', emoji: '📺', url: 'https://www.youtube.com/@sickonfire' },
+  { nombre: 'Instagram', emoji: '📸', url: 'https://www.instagram.com/sickonfxre/' },
+  { nombre: 'X', emoji: '🐦', url: 'https://x.com/sickonfirex' },
 ];
 
 module.exports = { REDES };
