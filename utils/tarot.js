@@ -239,7 +239,7 @@ function tirada(cantidad) {
   return salida;
 }
 
-const { TEXTOS, APERTURAS, TONO_CONJUNTO, CIERRES } = require('./tarotTextos');
+const { TEXTOS, APERTURAS, TONO_CONJUNTO, PUENTES, CIERRES } = require('./tarotTextos');
 
 const alAzar = arr => arr[crypto.randomInt(arr.length)];
 
@@ -265,11 +265,7 @@ function lecturaConjunta(sacadas) {
   const partes = [alAzar(TONO_CONJUNTO[invertidas])];
 
   if (ejes.every(Boolean)) {
-    partes.push(
-      `Detrás quedó ${ejes[0]}, que explica el punto de partida. ` +
-      `El presente se sostiene sobre ${ejes[1]}, y ahí es donde se juega la decisión. ` +
-      `Hacia adelante se perfila ${ejes[2]}.`
-    );
+    partes.push(alAzar(PUENTES).replace(/\{(\d)\}/g, (_, i) => ejes[i]));
   }
 
   const tono = invertidas === 0 ? 'favorable' : invertidas >= 2 ? 'exigente' : 'mixto';

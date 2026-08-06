@@ -169,6 +169,12 @@ const APERTURAS = [
   'Lo que aparece es claro.',
   'El mensaje se presenta así.',
   'Las cartas responden.',
+  'Veamos lo que se abre.',
+  'El mazo se pronuncia.',
+  'Esto es lo que hay sobre la mesa.',
+  'La respuesta toma esta forma.',
+  'Lo que sale es lo siguiente.',
+  'Las cartas hablan sin rodeos.',
 ];
 
 // Aperturas de la sintesis segun cuantas cartas salieron invertidas
@@ -176,37 +182,68 @@ const TONO_CONJUNTO = {
   0: [
     'La tirada llega limpia: las tres cartas caen derechas, y eso indica un proceso que avanza sin trabas de fondo.',
     'Ninguna carta salió invertida. El camino se muestra despejado y la energía fluye en una sola dirección.',
+    'Las tres cartas se presentan derechas. Es una tirada franca, sin dobleces ni resistencias ocultas.',
+    'No hay inversiones en esta lectura. Lo que se ve es lo que hay, y apunta en un solo sentido.',
+    'Tirada favorable de principio a fin: las tres posiciones sostienen la misma dirección.',
   ],
   1: [
     'Dos cartas derechas y una invertida: el proceso avanza, pero hay un punto que pide atención antes de seguir.',
     'La tirada es mayormente favorable, con una sola resistencia que conviene mirar de cerca.',
+    'Hay una carta invertida entre tres. No compromete el conjunto, pero marca dónde está el nudo.',
+    'El balance se inclina a favor, aunque una posición señala algo sin resolver.',
+    'Dos tercios de la lectura fluyen; el tercio restante pide revisión.',
   ],
   2: [
     'Dos cartas invertidas señalan que hay más bloqueo que impulso en este momento. No es un mal augurio, sino un aviso de que algo debe destrabarse.',
     'La mayoría de la tirada aparece invertida: el asunto está atravesando su parte más densa.',
+    'Dos de tres cartas caen del revés. El proceso no está detenido, pero sí trabado en varios puntos.',
+    'El peso de la lectura recae en lo invertido. Conviene resolver antes de empujar.',
+    'Con dos inversiones, la tirada describe un momento de fricción más que de avance.',
   ],
   3: [
     'Las tres cartas caen invertidas. Es una tirada exigente, que habla de un momento donde casi todo pide revisión antes que acción.',
     'Toda la tirada aparece del revés. No anuncia desgracia, sino que ningún frente está listo todavía: es tiempo de reordenar.',
+    'Las tres posiciones invertidas describen un ciclo atascado en su conjunto. Nada está perdido, pero nada está resuelto.',
+    'Lectura completamente invertida: el asunto pide detenerse antes que decidir.',
+    'Ninguna carta cae derecha. Es una tirada que habla de reconstrucción, no de continuidad.',
   ],
 };
+
+// Formas de encadenar los tres ejes. {0} pasado, {1} presente, {2} futuro
+const PUENTES = [
+  'Detrás quedó {0}, que explica el punto de partida. El presente se sostiene sobre {1}, y ahí es donde se juega la decisión. Hacia adelante se perfila {2}.',
+  'El origen del asunto está en {0}. Hoy todo gira en torno a {1}, y lo que empieza a abrirse camino es {2}.',
+  'Lo que quedó atrás fue {0}. En el momento presente pesa {1}. Más adelante aparece {2}.',
+  'La tirada parte de {0}, atraviesa {1} y desemboca en {2}.',
+  'De fondo hay {0}, que sigue condicionando. Lo inmediato es {1}. Lo que viene toma la forma de {2}.',
+  'Todo arranca en {0}. El presente enfrenta {1}, y el desenlace se orienta hacia {2}.',
+];
 
 const CIERRES = {
   favorable: [
     'La lectura acompaña: lo que se ponga en marcha ahora tiene terreno a favor.',
     'El conjunto invita a avanzar con confianza, sin forzar los tiempos.',
     'Hay coherencia entre lo que fue, lo que es y lo que viene.',
+    'Las tres posiciones se sostienen entre sí: es buen momento para decidir.',
+    'La dirección está clara y el terreno acompaña. Queda actuar.',
+    'Pocas veces la tirada se muestra tan alineada: aprovéchalo.',
   ],
   mixto: [
     'La lectura pide discernimiento: no todo está resuelto, pero tampoco cerrado.',
     'El conjunto sugiere avanzar con atención, resolviendo lo pendiente sin detener la marcha.',
     'Hay movimiento, aunque conviene atender lo que aún no encaja.',
+    'La tirada no impide avanzar; solo señala dónde mirar antes de hacerlo.',
+    'Se puede seguir adelante, siempre que no se ignore el punto trabado.',
+    'El camino sigue abierto, con una condición: no dejar el nudo sin deshacer.',
   ],
   exigente: [
     'La lectura aconseja pausa antes que acción: primero ordenar, después avanzar.',
     'El conjunto no cierra puertas, pero pide revisar los cimientos antes de dar el siguiente paso.',
     'Es momento de sostener y observar más que de decidir.',
+    'La tirada desaconseja forzar: lo que se empuje ahora encontrará resistencia.',
+    'Conviene dejar que el ciclo termine de girar antes de comprometerse.',
+    'No es una lectura de acción, sino de revisión. Lo demás vendrá después.',
   ],
 };
 
-module.exports = { TEXTOS, APERTURAS, TONO_CONJUNTO, CIERRES };
+module.exports = { TEXTOS, APERTURAS, TONO_CONJUNTO, PUENTES, CIERRES };
