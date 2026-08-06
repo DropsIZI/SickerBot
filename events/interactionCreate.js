@@ -12,10 +12,11 @@ module.exports = {
         const titulo = interaction.fields.getTextInputValue('titulo').trim();
         const texto = interaction.fields.getTextInputValue('texto').trim();
 
+        // El titulo va como encabezado dentro de la descripcion, no en
+        // setTitle: asi Discord lo renderiza en grande de verdad
         const embed = new EmbedBuilder()
           .setColor(0xC77DFF)
-          .setTitle(`✍️  ${titulo}`)
-          .setDescription(texto)
+          .setDescription(`## ✍️ ${titulo}\n\n${texto}`)
           .setTimestamp();
 
         if (anonimo) {
