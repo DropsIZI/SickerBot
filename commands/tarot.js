@@ -17,12 +17,13 @@ function buscarImagen(slug) {
 }
 
 function embedCarta({ carta, invertida }, titulo) {
-  const significado = invertida ? carta.invertido : carta.derecho;
+  const p = invertida ? 'i' : 'd';
 
   const embed = new EmbedBuilder()
-    .setColor(invertida ? 0x8B5E9C : 0xFF85A1)
-    .setTitle(`${carta.emoji}  ${carta.nombre}${invertida ? '  (invertida)' : ''}`)
-    .setDescription(`> ${significado}`);
+    .setColor(invertida ? 0x6B4E8C : 0xB8860B)
+    .setTitle(`${carta.emoji}  ${carta.nombre}${invertida ? '  · invertida' : ''}`)
+    .setDescription(`*${carta.clave[p]}*\n\n${carta.lectura[p]}`)
+    .addFields({ name: 'En síntesis', value: `> ${carta.corto[p]}` });
 
   if (titulo) embed.setAuthor({ name: titulo });
 
@@ -35,7 +36,7 @@ function embedCarta({ carta, invertida }, titulo) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('tarot')
-    .setDescription('Sick te lee las cartas 🔮')
+    .setDescription('Consulta las cartas del tarot 🔮')
     .addStringOption(o =>
       o.setName('tipo')
         .setDescription('Qué tirada quieres')
@@ -81,15 +82,15 @@ module.exports = {
       if (imagen) ficheros.push(new AttachmentBuilder(imagen));
     }
 
-    embeds[0].setFooter({
+    embeds[embeds.length - 1].setFooter({
       text: tipo === 'dia'
-        ? `Carta del día de ${usuario.username} • vuelve mañana 🍩`
-        : `Tirada de ${usuario.username} 🍩`,
+        ? `Carta del día de ${usuario.username} · una por jornada`
+        : `Consulta de ${usuario.username}`,
     });
 
     const cabecera = pregunta
-      ? `🔮 **${usuario.username}** preguntó: *${pregunta}*\nLas cartas dicen…`
-      : `🔮 Las cartas de **${usuario.username}**…`;
+      ? `🔮 **${usuario.username}** consulta: *${pregunta}*`
+      : `🔮 Lectura para **${usuario.username}**`;
 
     await interaction.editReply({ content: cabecera, embeds, files: ficheros });
   },
