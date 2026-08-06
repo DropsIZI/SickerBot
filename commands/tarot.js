@@ -71,7 +71,12 @@ module.exports = {
       });
     }
 
-    await interaction.deferReply();
+    const anonimo = interaction.options.getBoolean('anonimo') === true;
+
+    // Discord encabeza toda respuesta a un comando con «fulano usó /tarot»,
+    // asi que para que la tirada sea anonima de verdad hay que responder en
+    // privado y publicar la lectura como mensaje suelto del bot.
+    await interaction.deferReply({ ephemeral: anonimo });
 
     const tipo = interaction.options.getString('tipo') || 'dia';
     const pregunta = interaction.options.getString('pregunta');
@@ -100,8 +105,6 @@ module.exports = {
       if (imagen) ficheros.push(new AttachmentBuilder(imagen));
     }
 
-    const anonimo = interaction.options.getBoolean('anonimo') === true;
-
     embeds[embeds.length - 1].setFooter({
       text: anonimo
         ? 'Consulta anónima'
@@ -117,6 +120,12 @@ module.exports = {
         ? `🔮 Lectura anónima\n${apertura()}`
         : `🔮 Lectura para ${quien}\n${apertura()}`;
 
-    await interaction.editReply({ content: cabecera, embeds, files: ficheros });
+    if (!anonimo) {
+      return interaction.editReply({ content: cabecera, embeds, files: ficheros });
+    }
+
+    // Mensaje suelto del bot: sin la cabecera que delataria quien consulto
+    await interaction.channel.send({ content: cabecera, embeds, files: ficheros });
+    await interaction.editReply('✅ Tu lectura se publicó de forma anónima.');
   },
 };
