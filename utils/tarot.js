@@ -53,7 +53,7 @@ const CARTAS = [
     },
   },
   {
-    n: 5, slug: 'el-hierofante', nombre: 'El Hierofante', emoji: '📜',
+    n: 5, slug: 'el-sumo-sacerdote', nombre: 'El Sumo Sacerdote', emoji: '📜',
     clave: { d: 'Tradición · Guía · Aprendizaje', i: 'Dogma · Rebeldía necesaria' },
     corto: { d: 'Alguien con experiencia puede orientarte.', i: 'Una norma heredada ya no te sirve.' },
     lectura: {
