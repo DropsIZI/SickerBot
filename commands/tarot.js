@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const {
   cartaDelDia, cartaAlAzar, tirada,
-  consejoDe, lecturaConjunta, apertura,
+  consejoDe, lecturaDe, sintesisDe, lecturaConjunta, apertura,
 } = require('../utils/tarot');
 const { loadConfig } = require('../utils/levelManager');
 
@@ -26,8 +26,8 @@ function embedCarta(sacada, titulo) {
   const embed = new EmbedBuilder()
     .setColor(invertida ? 0x6B4E8C : 0xB8860B)
     .setTitle(`${carta.emoji}  ${carta.nombre}${invertida ? '  · invertida' : ''}`)
-    .setDescription(`*${carta.clave[p]}*\n\n${carta.lectura[p]}`)
-    .addFields({ name: 'En síntesis', value: `> ${carta.corto[p]}` });
+    .setDescription(`*${carta.clave[p]}*\n\n${lecturaDe(sacada)}`)
+    .addFields({ name: 'En síntesis', value: `> ${sintesisDe(sacada)}` });
 
   const consejo = consejoDe(sacada);
   if (consejo) embed.addFields({ name: 'Consejo', value: `> ${consejo}` });
@@ -55,6 +55,10 @@ module.exports = {
     )
     .addStringOption(o =>
       o.setName('pregunta').setDescription('Qué quieres consultar')
+    )
+    .addBooleanOption(o =>
+      o.setName('anonimo')
+        .setDescription('Publica la lectura sin revelar quién consultó')
     ),
 
   async execute(interaction) {
@@ -96,15 +100,22 @@ module.exports = {
       if (imagen) ficheros.push(new AttachmentBuilder(imagen));
     }
 
+    const anonimo = interaction.options.getBoolean('anonimo') === true;
+
     embeds[embeds.length - 1].setFooter({
-      text: tipo === 'dia'
-        ? `Carta del día de ${usuario.username} · una por jornada`
-        : `Consulta de ${usuario.username}`,
+      text: anonimo
+        ? 'Consulta anónima'
+        : tipo === 'dia'
+          ? `Carta del día de ${usuario.username} · una por jornada`
+          : `Consulta de ${usuario.username}`,
     });
 
+    const quien = anonimo ? 'Alguien' : `**${usuario.username}**`;
     const cabecera = pregunta
-      ? `🔮 **${usuario.username}** consulta: *${pregunta}*\n${apertura()}`
-      : `🔮 Lectura para **${usuario.username}**\n${apertura()}`;
+      ? `🔮 ${quien} consulta: *${pregunta}*\n${apertura()}`
+      : anonimo
+        ? `🔮 Lectura anónima\n${apertura()}`
+        : `🔮 Lectura para ${quien}\n${apertura()}`;
 
     await interaction.editReply({ content: cabecera, embeds, files: ficheros });
   },

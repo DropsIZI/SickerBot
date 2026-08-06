@@ -240,10 +240,23 @@ function tirada(cantidad) {
 }
 
 const { TEXTOS, APERTURAS, TONO_CONJUNTO, PUENTES, CIERRES } = require('./tarotTextos');
+const { VARIANTES } = require('./tarotVariantes');
 
 const alAzar = arr => arr[crypto.randomInt(arr.length)];
 
 const apertura = () => alAzar(APERTURAS);
+
+// La redaccion base vive en CARTAS y las alternativas en VARIANTES: se
+// juntan para que la misma carta no se lea siempre con las mismas palabras.
+function lecturaDe({ carta, invertida }) {
+  const p = invertida ? 'i' : 'd';
+  return alAzar([carta.lectura[p], ...(VARIANTES[carta.slug]?.lectura[p] || [])]);
+}
+
+function sintesisDe({ carta, invertida }) {
+  const p = invertida ? 'i' : 'd';
+  return alAzar([carta.corto[p], ...(VARIANTES[carta.slug]?.sintesis[p] || [])]);
+}
 
 // Consejo de la carta, distinto cada vez que sale
 function consejoDe({ carta, invertida }) {
@@ -276,5 +289,5 @@ function lecturaConjunta(sacadas) {
 
 module.exports = {
   CARTAS, cartaDelDia, cartaAlAzar, tirada,
-  consejoDe, lecturaConjunta, apertura,
+  consejoDe, lecturaDe, sintesisDe, lecturaConjunta, apertura,
 };

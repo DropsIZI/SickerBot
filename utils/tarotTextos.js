@@ -120,7 +120,7 @@ const TEXTOS = {
   'la-torre': {
     eje: { d: 'una ruptura que despeja el terreno', i: 'un derrumbe que se viene postergando' },
     consejo: {
-      d: ['Lo que cae no tenía base firme.', 'Después del golpe queda espacio libre.', 'No reconstruyas igual lo que se cayó.'],
+      d: ['Deja caer lo que ya no se sostiene.', 'Aprovecha el terreno que queda despejado.', 'No reconstruyas igual lo que se cayó.'],
       i: ['Anticiparse permite elegir cómo.', 'Lo aplazado suele caer con más fuerza.', 'Ya sabes qué tiene que cambiar.'],
     },
   },
@@ -148,7 +148,7 @@ const TEXTOS = {
   'el-juicio': {
     eje: { d: 'una segunda oportunidad que se presenta', i: 'una autocrítica más severa que justa' },
     consejo: {
-      d: ['Retoma aquello con la comprensión que ahora tienes.', 'Haz balance sin buscar culpables.', 'Ese llamado lo reconoces al escucharlo.'],
+      d: ['Retoma aquello con la comprensión que ahora tienes.', 'Ordena el pasado y sigue adelante.', 'Ese llamado lo reconoces al escucharlo.'],
       i: ['Mira los hechos sin la condena.', 'El rigor excesivo te está frenando, no impulsando.', 'Trátate como tratarías a quien quieres.'],
     },
   },
