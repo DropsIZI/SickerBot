@@ -3,8 +3,10 @@ const {
   TextInputStyle, ActionRowBuilder, PermissionFlagsBits,
 } = require('discord.js');
 const {
-  parsearRango, nombreRango, inscritos, inscribir, sortear, TIERS,
+  parsearRango, nombreRango, inscritos, inscribir, TIERS,
 } = require('./coliseo');
+const torneo = require('./coliseoTorneo');
+const { mensajeDuelo, cabeceraRonda, anuncioCampeon } = require('./coliseoRender');
 
 // Boton "Inscribirme" -> abre el formulario
 async function abrirFormulario(interaction) {
@@ -83,51 +85,71 @@ async function guardarInscripcion(interaction) {
   );
 }
 
-// Boton "Sortear" -> empareja y publica
+// Publica la cabecera de la ronda y un mensaje por duelo
+async function publicarRonda(canal, torneo) {
+  await canal.send({ embeds: [cabeceraRonda(torneo)] });
+  for (const duelo of torneo.duelos) {
+    await canal.send(mensajeDuelo(duelo, torneo));
+  }
+}
+
+// Boton "Sortear" -> arranca el torneo
 async function ejecutarSorteo(interaction) {
   if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
     return interaction.reply({ content: '❌ Solo los administradores pueden sortear.', ephemeral: true });
   }
 
-  await interaction.deferReply();
+  await interaction.deferReply({ ephemeral: true });
 
   const lista = inscritos();
   if (lista.length < 2) {
-    return interaction.editReply('❌ Hacen falta al menos **2** inscritos para sortear.');
+    return interaction.editReply('❌ Hacen falta al menos **2** inscritos.');
   }
 
-  const { duelos, descansa } = sortear(lista);
-
-  const bloques = duelos.map((d, n) => {
-    const rangoA = nombreRango(d.a);
-    const rangoB = nombreRango(d.b);
-    const ventaja = d.tiers === 0
-      ? 'Mismo tier · duelo parejo'
-      : `**${d.tiers}** tier${d.tiers > 1 ? 's' : ''} de diferencia`;
-
-    return `**Duelo ${n + 1}**\n` +
-      `> <@${d.a.userId}> \`${d.a.riotId}\` · ${rangoA}\n` +
-      `> ⚔️ **vs**\n` +
-      `> <@${d.b.userId}> \`${d.b.riotId}\` · ${rangoB}\n` +
-      `> ${ventaja}\n` +
-      `> 🚫 <@${d.menor.userId}> puede vetar **${d.bans}** campeón${d.bans > 1 ? 'es' : ''}`;
-  });
-
-  const embed = new EmbedBuilder()
-    .setColor(0x8B0000)
-    .setTitle('⚔️  Enfrentamientos del Coliseo')
-    .setDescription(bloques.join('\n\n').slice(0, 4000))
-    .setFooter({ text: `${duelos.length} duelo(s) · ${lista.length} inscritos` })
-    .setTimestamp();
-
-  if (descansa) {
-    embed.addFields({
-      name: '🎟️ Pasa sin jugar',
-      value: `<@${descansa.userId}> \`${descansa.riotId}\` · ${nombreRango(descansa)}`,
-    });
+  const enCurso = torneo.estado();
+  if (enCurso && !enCurso.campeon) {
+    return interaction.editReply(
+      `❌ Ya hay un torneo en marcha (${enCurso.nombreRonda}).\n` +
+      'Termínalo o usa `/coliseo cancelar` para descartarlo.'
+    );
   }
 
-  return interaction.editReply({ embeds: [embed] });
+  const nuevo = await torneo.iniciar(lista);
+  await publicarRonda(interaction.channel, nuevo);
+
+  return interaction.editReply(
+    `✅ Torneo iniciado con **${lista.length}** participantes.\n` +
+    `${nuevo.nombreRonda} · **${nuevo.duelos.length}** duelos.`
+  );
 }
 
-module.exports = { abrirFormulario, guardarInscripcion, ejecutarSorteo };
+// Boton "Gano X" -> marca el ganador y, si la ronda esta lista, avanza
+async function marcarGanador(interaction) {
+  if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    return interaction.reply({ content: '❌ Solo el anfitrión decide los ganadores.', ephemeral: true });
+  }
+
+  const [, , dueloId, userId] = interaction.customId.split(':');
+  await interaction.deferUpdate();
+
+  const actualizado = await torneo.registrarGanador(dueloId, userId);
+  if (!actualizado) return;
+
+  // Refrescar el mensaje del duelo, ya sin botones
+  const duelo = actualizado.duelos.find(d => d.id === dueloId);
+  await interaction.editReply(mensajeDuelo(duelo, actualizado));
+
+  if (!torneo.rondaCompleta(actualizado)) return;
+
+  const siguiente = await torneo.avanzarRonda();
+  if (!siguiente) return;
+
+  if (siguiente.campeon) {
+    await interaction.channel.send({ embeds: [anuncioCampeon(siguiente)] });
+    return;
+  }
+
+  await publicarRonda(interaction.channel, siguiente);
+}
+
+module.exports = { abrirFormulario, guardarInscripcion, ejecutarSorteo, marcarGanador };

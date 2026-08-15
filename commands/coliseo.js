@@ -3,6 +3,7 @@ const {
   ActionRowBuilder, ButtonBuilder, ButtonStyle,
 } = require('discord.js');
 const { inscritos, borrarInscritos, nombreRango, BANS_MAX } = require('../utils/coliseo');
+const torneo = require('../utils/coliseoTorneo');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,7 +21,10 @@ module.exports = {
       .setDescription('Muestra quién está inscrito'))
     .addSubcommand(s => s
       .setName('reiniciar')
-      .setDescription('Borra todas las inscripciones')),
+      .setDescription('Borra todas las inscripciones'))
+    .addSubcommand(s => s
+      .setName('cancelar')
+      .setDescription('Descarta el torneo en curso sin tocar las inscripciones')),
 
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
@@ -96,7 +100,21 @@ module.exports = {
     if (sub === 'reiniciar') {
       const cuantos = inscritos().length;
       await borrarInscritos();
-      return interaction.reply({ content: `✅ Borradas **${cuantos}** inscripciones.`, ephemeral: true });
+      await torneo.cancelar();
+      return interaction.reply({
+        content: `✅ Borradas **${cuantos}** inscripciones y el torneo en curso.`,
+        ephemeral: true,
+      });
+    }
+
+    if (sub === 'cancelar') {
+      const actual = torneo.estado();
+      if (!actual) return interaction.reply({ content: 'No hay ningún torneo en curso.', ephemeral: true });
+      await torneo.cancelar();
+      return interaction.reply({
+        content: `✅ Torneo descartado (iba por ${actual.nombreRonda}). Las inscripciones se mantienen.`,
+        ephemeral: true,
+      });
     }
   },
 };

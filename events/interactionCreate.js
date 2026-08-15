@@ -14,6 +14,9 @@ module.exports = {
         if (interaction.isButton() && interaction.customId === 'coliseo:sortear') {
           return await coliseo.ejecutarSorteo(interaction);
         }
+        if (interaction.isButton() && interaction.customId.startsWith('coliseo:win:')) {
+          return await coliseo.marcarGanador(interaction);
+        }
       } catch (err) {
         console.error('[coliseo]', err);
         const msg = { content: '❌ Algo falló en el Coliseo.', ephemeral: true };
