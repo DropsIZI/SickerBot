@@ -1,2 +1,7 @@
 node_modules/
 .env
+
+# Instaladores y binarios grandes: GitHub rechaza lo que pase de 100 MB
+*.msi
+*.exe
+*.zip

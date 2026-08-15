@@ -1,6 +1,28 @@
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction, client) {
+    // Coliseo del Abismo: botones e inscripcion
+    if (interaction.customId?.startsWith('coliseo:')) {
+      const coliseo = require('../utils/coliseoHandlers');
+      try {
+        if (interaction.isButton() && interaction.customId === 'coliseo:inscribir') {
+          return await coliseo.abrirFormulario(interaction);
+        }
+        if (interaction.isModalSubmit() && interaction.customId === 'coliseo:form') {
+          return await coliseo.guardarInscripcion(interaction);
+        }
+        if (interaction.isButton() && interaction.customId === 'coliseo:sortear') {
+          return await coliseo.ejecutarSorteo(interaction);
+        }
+      } catch (err) {
+        console.error('[coliseo]', err);
+        const msg = { content: '❌ Algo falló en el Coliseo.', ephemeral: true };
+        return interaction.replied || interaction.deferred
+          ? interaction.followUp(msg)
+          : interaction.reply(msg);
+      }
+    }
+
     // Formulario de /poema
     if (interaction.isModalSubmit() && interaction.customId.startsWith('modal-poema:')) {
       const { EmbedBuilder } = require('discord.js');
