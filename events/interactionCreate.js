@@ -1,3 +1,5 @@
+const { MessageFlags } = require('discord.js');
+
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction, client) {
@@ -7,6 +9,9 @@ module.exports = {
       try {
         if (interaction.isButton() && interaction.customId === 'coliseo:inscribir') {
           return await coliseo.abrirFormulario(interaction);
+        }
+        if (interaction.isButton() && interaction.customId === 'coliseo:desinscribir') {
+          return await coliseo.desinscribirse(interaction);
         }
         if (interaction.isModalSubmit() && interaction.customId === 'coliseo:form') {
           return await coliseo.guardarInscripcion(interaction);
@@ -19,7 +24,7 @@ module.exports = {
         }
       } catch (err) {
         console.error('[coliseo]', err);
-        const msg = { content: '❌ Algo falló en el Coliseo.', ephemeral: true };
+        const msg = { content: '❌ Algo falló en el Coliseo.', flags: MessageFlags.Ephemeral };
         return interaction.replied || interaction.deferred
           ? interaction.followUp(msg)
           : interaction.reply(msg);
@@ -32,7 +37,7 @@ module.exports = {
       const anonimo = interaction.customId.endsWith(':anon');
 
       try {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const titulo = interaction.fields.getTextInputValue('titulo').trim();
         const texto = interaction.fields.getTextInputValue('texto').trim();
@@ -70,7 +75,7 @@ module.exports = {
       } catch (err) {
         console.error('[modal-poema]', err);
         const msg = '❌ No pude publicar el poema.';
-        return interaction.deferred ? interaction.editReply(msg) : interaction.reply({ content: msg, ephemeral: true });
+        return interaction.deferred ? interaction.editReply(msg) : interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
       }
     }
 
@@ -82,7 +87,7 @@ module.exports = {
       if (!grupo) return;
 
       try {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const delGrupo = rolesDeGrupo(grupoId);
         const elegidos = grupo.opciones
@@ -109,7 +114,7 @@ module.exports = {
         const msg = '❌ No pude cambiar tus roles. El rol del bot debe estar **por encima** de estos.';
         return interaction.deferred
           ? interaction.editReply(msg)
-          : interaction.reply({ content: msg, ephemeral: true });
+          : interaction.reply({ content: msg, flags: MessageFlags.Ephemeral });
       }
     }
 
@@ -122,7 +127,7 @@ module.exports = {
       await command.execute(interaction);
     } catch (err) {
       console.error('[interactionCreate]', err);
-      const msg = { content: '❌ Ocurrió un error al ejecutar el comando.', ephemeral: true };
+      const msg = { content: '❌ Ocurrió un error al ejecutar el comando.', flags: MessageFlags.Ephemeral };
       interaction.replied || interaction.deferred
         ? interaction.followUp(msg)
         : interaction.reply(msg);

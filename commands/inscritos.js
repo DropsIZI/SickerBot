@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags} = require('discord.js');
 const { inscritos, nombreRango, TIERS, valorDe } = require('../utils/coliseo');
 const torneo = require('../utils/coliseoTorneo');
 
@@ -13,7 +13,7 @@ module.exports = {
     if (!lista.length) {
       return interaction.reply({
         content: '📋 Todavía no hay nadie inscrito en el Coliseo.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 

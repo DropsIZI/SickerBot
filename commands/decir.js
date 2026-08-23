@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags} = require('discord.js');
 
 function splitMessage(text, maxLen = 2000) {
   if (text.length <= maxLen) return [text];
@@ -40,6 +40,6 @@ module.exports = {
       await interaction.channel.send(payload);
     }
 
-    await interaction.reply({ content: '✅ Mensaje enviado.', ephemeral: true });
+    await interaction.reply({ content: '✅ Mensaje enviado.', flags: MessageFlags.Ephemeral });
   },
 };

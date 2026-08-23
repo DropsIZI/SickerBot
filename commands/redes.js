@@ -1,7 +1,6 @@
 const {
   SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder,
-  ActionRowBuilder, ButtonBuilder, ButtonStyle,
-} = require('discord.js');
+  ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags} = require('discord.js');
 const { REDES, textoHorario } = require('../utils/redes');
 
 module.exports = {
@@ -14,7 +13,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     if (!REDES.length) {
       return interaction.editReply('❌ No hay redes configuradas en `utils/redes.js`.');

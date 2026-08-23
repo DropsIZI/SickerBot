@@ -11,7 +11,7 @@ module.exports = {
     const target = interaction.options.getMember('usuario') || interaction.member;
     const data = getUser(target.id);
     const needed = xpForLevel(data.level + 1);
-    const progress = Math.floor((data.xp / needed) * 20);
+    const progress = Math.min(20, Math.max(0, Math.floor((data.xp / needed) * 20)));
     const bar = '█'.repeat(progress) + '░'.repeat(20 - progress);
 
     const embed = new EmbedBuilder()

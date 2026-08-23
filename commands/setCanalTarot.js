@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags} = require('discord.js');
 const { loadConfig, saveConfig } = require('../utils/levelManager');
 
 module.exports = {
@@ -22,7 +22,7 @@ module.exports = {
       content: canal
         ? `✅ El tarot solo funcionará en ${canal} 🔮`
         : '✅ El tarot se puede usar en cualquier canal.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

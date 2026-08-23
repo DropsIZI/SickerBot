@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder, MessageFlags} = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const {
@@ -68,7 +68,7 @@ module.exports = {
     if (canalTarot && interaction.channelId !== canalTarot) {
       return interaction.reply({
         content: `❌ Las cartas solo se leen en <#${canalTarot}> 🔮`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -77,7 +77,7 @@ module.exports = {
     // Discord encabeza toda respuesta a un comando con «fulano usó /tarot»,
     // asi que para que la tirada sea anonima de verdad hay que responder en
     // privado y publicar la lectura como mensaje suelto del bot.
-    await interaction.deferReply({ ephemeral: anonimo });
+    await interaction.deferReply({ flags: anonimo ? MessageFlags.Ephemeral : undefined });
 
     const tipo = interaction.options.getString('tipo') || 'dia';
     const pregunta = interaction.options.getString('pregunta');
@@ -129,11 +129,11 @@ module.exports = {
         : `🔮 Lectura para ${quien}\n${apertura()}`;
 
     if (!anonimo) {
-      return interaction.editReply({ content: cabecera, embeds, files: ficheros });
+      return interaction.editReply({ content: cabecera, embeds, files: ficheros, allowedMentions: { parse: [] } });
     }
 
     // Mensaje suelto del bot: sin la cabecera que delataria quien consulto
-    await interaction.channel.send({ content: cabecera, embeds, files: ficheros });
+    await interaction.channel.send({ content: cabecera, embeds, files: ficheros, allowedMentions: { parse: [] } });
     await interaction.editReply('✅ Tu lectura se publicó de forma anónima.');
   },
 };

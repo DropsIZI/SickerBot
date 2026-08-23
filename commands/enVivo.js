@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags} = require('discord.js');
 const { getLinks } = require('../utils/streamStore');
 const { marcarEnVivo } = require('../utils/liveStatus');
 
@@ -12,21 +12,24 @@ module.exports = {
 
   async execute(interaction) {
     const streamerRoleId = process.env.STREAMER_ROLE_ID;
-    if (streamerRoleId && !interaction.member.roles.cache.has(streamerRoleId)) {
-      return interaction.reply({ content: '❌ Necesitas el rol de Streamer para usar este comando.', ephemeral: true });
+    if (!streamerRoleId) {
+      return interaction.reply({ content: '⚠️ STREAMER_ROLE_ID no está configurado en el servidor.', flags: MessageFlags.Ephemeral });
+    }
+    if (!interaction.member.roles.cache.has(streamerRoleId)) {
+      return interaction.reply({ content: '❌ Necesitas el rol de Streamer para usar este comando.', flags: MessageFlags.Ephemeral });
     }
 
     const links = getLinks(interaction.user.id);
     if (links.size === 0) {
-      return interaction.reply({ content: '❌ Primero configura tus links con `/set-stream`.', ephemeral: true });
+      return interaction.reply({ content: '❌ Primero configura tus links con `/set-stream`.', flags: MessageFlags.Ephemeral });
     }
 
     const titulo = interaction.options.getString('titulo');
     const streamChannelId = process.env.STREAM_CHANNEL_ID;
-    if (!streamChannelId) return interaction.reply({ content: '❌ STREAM_CHANNEL_ID no configurado.', ephemeral: true });
+    if (!streamChannelId) return interaction.reply({ content: '❌ STREAM_CHANNEL_ID no configurado.', flags: MessageFlags.Ephemeral });
 
     const channel = await interaction.guild.channels.fetch(streamChannelId).catch(() => null);
-    if (!channel) return interaction.reply({ content: '❌ Canal de streams no encontrado.', ephemeral: true });
+    if (!channel) return interaction.reply({ content: '❌ Canal de streams no encontrado.', flags: MessageFlags.Ephemeral });
 
     const linksText = [...links.entries()]
       .map(([p, l]) => `> 🔗 **${p}:** ${l}`).join('\n');
@@ -55,7 +58,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ ¡Notificación enviada! 🎉\nEl canal ya aparece en vivo. Usa `/fin-stream` al terminar.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

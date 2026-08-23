@@ -1,7 +1,6 @@
 const {
   SlashCommandBuilder, ModalBuilder, TextInputBuilder,
-  TextInputStyle, ActionRowBuilder,
-} = require('discord.js');
+  TextInputStyle, ActionRowBuilder, MessageFlags} = require('discord.js');
 const { loadConfig } = require('../utils/levelManager');
 
 module.exports = {
@@ -17,7 +16,7 @@ module.exports = {
     if (canalPoemas && interaction.channelId !== canalPoemas) {
       return interaction.reply({
         content: `❌ Los poemas se publican en <#${canalPoemas}> ✍️`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 

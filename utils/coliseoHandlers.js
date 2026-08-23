@@ -1,9 +1,8 @@
 const {
   EmbedBuilder, ModalBuilder, TextInputBuilder,
-  TextInputStyle, ActionRowBuilder, PermissionFlagsBits,
-} = require('discord.js');
+  TextInputStyle, ActionRowBuilder, PermissionFlagsBits, MessageFlags} = require('discord.js');
 const {
-  parsearRango, nombreRango, inscritos, inscribir, TIERS,
+  parsearRango, nombreRango, inscritos, inscribir, desinscribir, TIERS,
 } = require('./coliseo');
 const torneo = require('./coliseoTorneo');
 const { mensajeDuelo, cabeceraRonda, anuncioCampeon } = require('./coliseoRender');
@@ -47,7 +46,7 @@ async function abrirFormulario(interaction) {
 
 // Envio del formulario -> valida y guarda
 async function guardarInscripcion(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const riotId = interaction.fields.getTextInputValue('riotid').trim();
   const textoRango = interaction.fields.getTextInputValue('rango').trim();
@@ -85,6 +84,17 @@ async function guardarInscripcion(interaction) {
   );
 }
 
+// Boton "Desinscribirme" -> se quita a si mismo de la lista
+async function desinscribirse(interaction) {
+  const estaba = inscritos().some(i => i.userId === interaction.user.id);
+  if (!estaba) {
+    return interaction.reply({ content: 'No estabas inscrito en el Coliseo.', flags: MessageFlags.Ephemeral });
+  }
+
+  await desinscribir(interaction.user.id);
+  return interaction.reply({ content: '✅ Te saqué de la lista de inscritos. ¡Vuelve cuando quieras!', flags: MessageFlags.Ephemeral });
+}
+
 // Publica la cabecera de la ronda y un mensaje por duelo
 async function publicarRonda(canal, torneo) {
   await canal.send({ embeds: [cabeceraRonda(torneo)] });
@@ -96,10 +106,10 @@ async function publicarRonda(canal, torneo) {
 // Boton "Sortear" -> arranca el torneo
 async function ejecutarSorteo(interaction) {
   if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return interaction.reply({ content: '❌ Solo los administradores pueden sortear.', ephemeral: true });
+    return interaction.reply({ content: '❌ Solo los administradores pueden sortear.', flags: MessageFlags.Ephemeral });
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const lista = inscritos();
   if (lista.length < 2) {
@@ -126,7 +136,7 @@ async function ejecutarSorteo(interaction) {
 // Boton "Gano X" -> marca el ganador y, si la ronda esta lista, avanza
 async function marcarGanador(interaction) {
   if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return interaction.reply({ content: '❌ Solo el anfitrión decide los ganadores.', ephemeral: true });
+    return interaction.reply({ content: '❌ Solo el anfitrión decide los ganadores.', flags: MessageFlags.Ephemeral });
   }
 
   const [, , dueloId, userId] = interaction.customId.split(':');
@@ -152,4 +162,4 @@ async function marcarGanador(interaction) {
   await publicarRonda(interaction.channel, siguiente);
 }
 
-module.exports = { abrirFormulario, guardarInscripcion, ejecutarSorteo, marcarGanador };
+module.exports = { abrirFormulario, guardarInscripcion, desinscribirse, ejecutarSorteo, marcarGanador };

@@ -1,7 +1,6 @@
 const {
   SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder,
-  ActionRowBuilder, StringSelectMenuBuilder,
-} = require('discord.js');
+  ActionRowBuilder, StringSelectMenuBuilder, MessageFlags} = require('discord.js');
 const { GRUPOS, nombreRol } = require('../utils/autoroles');
 
 module.exports = {
@@ -26,7 +25,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const guild = interaction.guild;
     await guild.roles.fetch();
 

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags} = require('discord.js');
 const { loadConfig, saveConfig } = require('../utils/levelManager');
 
 module.exports = {
@@ -25,14 +25,14 @@ module.exports = {
       saveConfig(config);
       await interaction.reply({
         content: `✅ Al llegar al **nivel ${nivel}** se asignará el rol **${rol.name}** automáticamente.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       delete config.levelRoles[nivel];
       saveConfig(config);
       await interaction.reply({
         content: `✅ Se quitó el rol configurado para el **nivel ${nivel}**.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

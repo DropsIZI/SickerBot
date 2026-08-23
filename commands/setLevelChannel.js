@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags} = require('discord.js');
 const { loadConfig, saveConfig } = require('../utils/levelManager');
 
 module.exports = {
@@ -18,7 +18,7 @@ module.exports = {
 
     await interaction.reply({
       content: `✅ Las subidas de nivel se anunciarán en ${canal}.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

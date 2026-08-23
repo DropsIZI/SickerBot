@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags} = require('discord.js');
 
 // Estructura objetivo. Cada canal se busca entre los que ya existen por
 // palabras clave, de modo que se renombra y se mueve el canal de siempre en
@@ -78,7 +78,7 @@ module.exports = {
 
   async execute(interaction) {
     const aplicar = interaction.options.getBoolean('aplicar') === true;
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const guild = interaction.guild;
     await guild.channels.fetch();

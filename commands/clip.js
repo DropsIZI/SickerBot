@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags} = require('discord.js');
 const { loadConfig } = require('../utils/levelManager');
 
 // Kick no expone los clips en su API (la oficial no los cubre y la interna
@@ -29,13 +29,13 @@ module.exports = {
 
     let host;
     try { host = new URL(url).hostname.replace(/^www\./, ''); }
-    catch { return interaction.reply({ content: '❌ Eso no parece un enlace válido.', ephemeral: true }); }
+    catch { return interaction.reply({ content: '❌ Eso no parece un enlace válido.', flags: MessageFlags.Ephemeral }); }
 
-    const plataforma = PLATAFORMAS.find(p => host.endsWith(p.dominio));
+    const plataforma = PLATAFORMAS.find(p => host === p.dominio || host.endsWith(`.${p.dominio}`));
     if (!plataforma) {
       return interaction.reply({
         content: '❌ Solo acepto enlaces de Kick, TikTok, Twitch o YouTube.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -47,7 +47,7 @@ module.exports = {
     if (!destino) {
       return interaction.reply({
         content: '❌ El canal de clips ya no existe. Configúralo con `/set-canal-clips`.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -64,7 +64,7 @@ module.exports = {
 
     await interaction.reply({
       content: destino.id === interaction.channelId ? '✅ ¡Clip publicado!' : `✅ ¡Publicado en ${destino}!`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

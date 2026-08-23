@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder, MessageFlags} = require('discord.js');
 const { generateWelcomeCard } = require('../utils/welcomeCard');
 
 module.exports = {
@@ -16,7 +16,7 @@ module.exports = {
 
   async execute(interaction) {
     // Generar el canvas y descargar el avatar tarda más de 3s a veces
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const target = interaction.options.getUser('usuario') || interaction.user;
     const member = await interaction.guild.members.fetch(target.id).catch(() => null);

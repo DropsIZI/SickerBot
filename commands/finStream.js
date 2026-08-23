@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags} = require('discord.js');
 const { marcarOffline, enVivoAhora } = require('../utils/liveStatus');
 
 module.exports = {
@@ -8,19 +8,22 @@ module.exports = {
 
   async execute(interaction) {
     const streamerRoleId = process.env.STREAMER_ROLE_ID;
-    if (streamerRoleId && !interaction.member.roles.cache.has(streamerRoleId)) {
-      return interaction.reply({ content: '❌ Necesitas el rol de Streamer para usar este comando.', ephemeral: true });
+    if (!streamerRoleId) {
+      return interaction.reply({ content: '⚠️ STREAMER_ROLE_ID no está configurado en el servidor.', flags: MessageFlags.Ephemeral });
+    }
+    if (!interaction.member.roles.cache.has(streamerRoleId)) {
+      return interaction.reply({ content: '❌ Necesitas el rol de Streamer para usar este comando.', flags: MessageFlags.Ephemeral });
     }
 
     if (!enVivoAhora.has(interaction.user.id)) {
-      return interaction.reply({ content: 'ℹ️ No constabas como en vivo, no hay nada que cerrar.', ephemeral: true });
+      return interaction.reply({ content: 'ℹ️ No constabas como en vivo, no hay nada que cerrar.', flags: MessageFlags.Ephemeral });
     }
 
     await marcarOffline(interaction.guild, interaction.user.id);
 
     await interaction.reply({
       content: '✅ Stream cerrado. ¡Gracias por transmitir! 🍩',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

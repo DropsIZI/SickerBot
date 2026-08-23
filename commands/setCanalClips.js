@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags} = require('discord.js');
 const { loadConfig, saveConfig } = require('../utils/levelManager');
 
 module.exports = {
@@ -22,7 +22,7 @@ module.exports = {
       content: canal
         ? `✅ Los clips se publicarán en ${canal}.\nCualquiera puede compartir uno con \`/clip\`.`
         : '✅ Desactivado. `/clip` publicará en el canal donde se use.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

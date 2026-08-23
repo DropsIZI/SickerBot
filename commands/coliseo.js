@@ -1,8 +1,7 @@
 const {
   SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder,
-  ActionRowBuilder, ButtonBuilder, ButtonStyle,
-} = require('discord.js');
-const { inscritos, borrarInscritos, nombreRango, BANS_MAX } = require('../utils/coliseo');
+  ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags} = require('discord.js');
+const { inscritos, borrarInscritos, desinscribir, nombreRango, BANS_MAX } = require('../utils/coliseo');
 const torneo = require('../utils/coliseoTorneo');
 
 module.exports = {
@@ -19,6 +18,13 @@ module.exports = {
     .addSubcommand(s => s
       .setName('lista')
       .setDescription('Muestra quién está inscrito'))
+    .addSubcommand(s => s
+      .setName('quitar')
+      .setDescription('Saca a alguien puntual de la lista de inscritos')
+      .addUserOption(o => o
+        .setName('usuario')
+        .setDescription('A quién sacar')
+        .setRequired(true)))
     .addSubcommand(s => s
       .setName('reiniciar')
       .setDescription('Borra todas las inscripciones'))
@@ -48,10 +54,15 @@ module.exports = {
             .setCustomId('coliseo:inscribir')
             .setLabel('Inscribirme')
             .setEmoji('⚔️')
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('coliseo:desinscribir')
+            .setLabel('Desinscribirme')
+            .setEmoji('❌')
+            .setStyle(ButtonStyle.Secondary)
         )],
       });
-      return interaction.reply({ content: '✅ Panel de inscripciones publicado.', ephemeral: true });
+      return interaction.reply({ content: '✅ Panel de inscripciones publicado.', flags: MessageFlags.Ephemeral });
     }
 
     if (sub === 'sorteo') {
@@ -75,12 +86,12 @@ module.exports = {
             .setStyle(ButtonStyle.Danger)
         )],
       });
-      return interaction.reply({ content: '✅ Panel de sorteo publicado.', ephemeral: true });
+      return interaction.reply({ content: '✅ Panel de sorteo publicado.', flags: MessageFlags.Ephemeral });
     }
 
     if (sub === 'lista') {
       const lista = inscritos();
-      if (!lista.length) return interaction.reply({ content: 'Todavía no hay nadie inscrito.', ephemeral: true });
+      if (!lista.length) return interaction.reply({ content: 'Todavía no hay nadie inscrito.', flags: MessageFlags.Ephemeral });
 
       const texto = lista
         .slice()
@@ -93,8 +104,18 @@ module.exports = {
           .setColor(0x0F2027)
           .setTitle(`⚔️ Inscritos (${lista.length})`)
           .setDescription(texto.slice(0, 4000))],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
+    }
+
+    if (sub === 'quitar') {
+      const usuario = interaction.options.getUser('usuario');
+      const estaba = inscritos().some(i => i.userId === usuario.id);
+      if (!estaba) {
+        return interaction.reply({ content: `${usuario} no está inscrito.`, flags: MessageFlags.Ephemeral });
+      }
+      await desinscribir(usuario.id);
+      return interaction.reply({ content: `✅ Saqué a ${usuario} de la lista de inscritos.`, flags: MessageFlags.Ephemeral });
     }
 
     if (sub === 'reiniciar') {
@@ -103,17 +124,17 @@ module.exports = {
       await torneo.cancelar();
       return interaction.reply({
         content: `✅ Borradas **${cuantos}** inscripciones y el torneo en curso.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     if (sub === 'cancelar') {
       const actual = torneo.estado();
-      if (!actual) return interaction.reply({ content: 'No hay ningún torneo en curso.', ephemeral: true });
+      if (!actual) return interaction.reply({ content: 'No hay ningún torneo en curso.', flags: MessageFlags.Ephemeral });
       await torneo.cancelar();
       return interaction.reply({
         content: `✅ Torneo descartado (iba por ${actual.nombreRonda}). Las inscripciones se mantienen.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

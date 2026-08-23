@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags} = require('discord.js');
 const { loadConfig, saveConfig } = require('../utils/levelManager');
 const { FUENTES } = require('../utils/redditWatcher');
 
@@ -24,7 +24,7 @@ module.exports = {
         ? `✅ Publicaré **2 memes cada 30 minutos** en ${canal} (unos 96 al día).\n` +
           `Fuentes: ${FUENTES.map(f => '`r/' + f + '`').join(', ')}`
         : '✅ Memes automáticos desactivados. `/meme` sigue funcionando.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags} = require('discord.js');
 const { streamLinks, getLinks } = require('../utils/streamStore');
 
 module.exports = {
@@ -22,8 +22,11 @@ module.exports = {
 
   async execute(interaction) {
     const streamerRoleId = process.env.STREAMER_ROLE_ID;
-    if (streamerRoleId && !interaction.member.roles.cache.has(streamerRoleId)) {
-      return interaction.reply({ content: '❌ Necesitas el rol de Streamer para usar este comando.', ephemeral: true });
+    if (!streamerRoleId) {
+      return interaction.reply({ content: '⚠️ STREAMER_ROLE_ID no está configurado en el servidor.', flags: MessageFlags.Ephemeral });
+    }
+    if (!interaction.member.roles.cache.has(streamerRoleId)) {
+      return interaction.reply({ content: '❌ Necesitas el rol de Streamer para usar este comando.', flags: MessageFlags.Ephemeral });
     }
 
     const plataforma = interaction.options.getString('plataforma');
@@ -37,7 +40,7 @@ module.exports = {
 
     await interaction.reply({
       content: `✅ Link de **${plataforma}** guardado.\n\n📋 Tus canales:\n${todos}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

@@ -89,6 +89,13 @@ async function borrarInscritos() {
   await storage.setConfig({ ...config, coliseoInscritos: [] });
 }
 
+async function desinscribir(userId) {
+  const lista = inscritos().filter(i => i.userId !== userId);
+  const config = storage.getConfig();
+  await storage.setConfig({ ...config, coliseoInscritos: lista });
+  return lista.length;
+}
+
 // --- Sorteo ---
 
 // Mezcla, empareja de dos en dos y calcula la ventaja de cada duelo.
@@ -123,5 +130,5 @@ function sortear(lista) {
 module.exports = {
   TIERS, DIVISIONES, BANS_MAX,
   parsearRango, valorDe, nombreRango, diferenciaTiers, bansDelMenor,
-  inscritos, inscribir, borrarInscritos, sortear,
+  inscritos, inscribir, borrarInscritos, desinscribir, sortear,
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags} = require('discord.js');
 const { REGLAS, SANCIONES } = require('../utils/reglas');
 
 module.exports = {
@@ -11,7 +11,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const banner = interaction.options.getAttachment('banner');
     if (banner && !banner.contentType?.startsWith('image/')) {
