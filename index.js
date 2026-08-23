@@ -37,6 +37,10 @@ for (const file of eventFiles) {
   }
 }
 
+// Vuelve a registrar los slash commands en cada arranque, asi los cambios de
+// opciones/subcomandos quedan sincronizados sin correr deploy-commands.js aparte
+require('./deploy-commands');
+
 client.on('error', err => console.error('[Discord error]', err.message));
 process.on('unhandledRejection', err => console.error('[unhandledRejection]', err));
 

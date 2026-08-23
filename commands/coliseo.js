@@ -21,16 +21,26 @@ module.exports = {
     .addSubcommand(s => s
       .setName('quitar')
       .setDescription('Saca a alguien puntual de la lista de inscritos')
-      .addUserOption(o => o
-        .setName('usuario')
-        .setDescription('A quién sacar')
-        .setRequired(true)))
+      .addStringOption(o => o
+        .setName('riotid')
+        .setDescription('Riot ID del inscrito (empieza a escribir para buscar)')
+        .setRequired(true)
+        .setAutocomplete(true)))
     .addSubcommand(s => s
       .setName('reiniciar')
       .setDescription('Borra todas las inscripciones'))
     .addSubcommand(s => s
       .setName('cancelar')
       .setDescription('Descarta el torneo en curso sin tocar las inscripciones')),
+
+  async autocomplete(interaction) {
+    const foco = interaction.options.getFocused().toLowerCase();
+    const opciones = inscritos()
+      .filter(i => i.riotId.toLowerCase().includes(foco))
+      .slice(0, 25)
+      .map(i => ({ name: `${i.riotId} · ${nombreRango(i)}`.slice(0, 100), value: i.riotId }));
+    await interaction.respond(opciones);
+  },
 
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
@@ -109,13 +119,13 @@ module.exports = {
     }
 
     if (sub === 'quitar') {
-      const usuario = interaction.options.getUser('usuario');
-      const estaba = inscritos().some(i => i.userId === usuario.id);
-      if (!estaba) {
-        return interaction.reply({ content: `${usuario} no está inscrito.`, flags: MessageFlags.Ephemeral });
+      const riotid = interaction.options.getString('riotid');
+      const match = inscritos().find(i => i.riotId.toLowerCase() === riotid.toLowerCase());
+      if (!match) {
+        return interaction.reply({ content: `No encontré a nadie inscrito con el Riot ID **${riotid}**.`, flags: MessageFlags.Ephemeral });
       }
-      await desinscribir(usuario.id);
-      return interaction.reply({ content: `✅ Saqué a ${usuario} de la lista de inscritos.`, flags: MessageFlags.Ephemeral });
+      await desinscribir(match.userId);
+      return interaction.reply({ content: `✅ Saqué a **${match.riotId}** (<@${match.userId}>) de la lista de inscritos.`, flags: MessageFlags.Ephemeral });
     }
 
     if (sub === 'reiniciar') {
