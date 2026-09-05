@@ -6,7 +6,7 @@ const {
   marcarConfirmacion, TIERS,
 } = require('./coliseo');
 const torneo = require('./coliseoTorneo');
-const { mensajeDuelo, cabeceraRonda, anuncioCampeon } = require('./coliseoRender');
+const { mensajeDuelo, cabeceraRonda, anuncioPodio } = require('./coliseoRender');
 
 // Boton "Inscribirme" -> abre el formulario
 async function abrirFormulario(interaction) {
@@ -190,7 +190,7 @@ async function marcarGanador(interaction) {
   if (!siguiente) return;
 
   if (siguiente.campeon) {
-    await interaction.channel.send({ embeds: [anuncioCampeon(siguiente)] });
+    await interaction.channel.send({ embeds: [anuncioPodio(siguiente)] });
     return;
   }
 

@@ -41,6 +41,17 @@ const mezclar = arr => {
 // Con un numero impar el descanso se reparte: se elige entre quienes todavia
 // no han pasado sin jugar, para que no le toque dos veces al mismo mientras
 // haya gente que aun no ha descansado.
+function crearDuelo(id, a, b, tipo = 'normal') {
+  const menor = valorDe(a) <= valorDe(b) ? a : b;
+  return {
+    id, a, b, tipo,
+    menor: menor.userId,
+    tiers: diferenciaTiers(a, b),
+    bans: bansDelMenor(a, b),
+    ganador: null,
+  };
+}
+
 function armarDuelos(jugadores, rondaNum, yaDescansaron = []) {
   const pool = mezclar(jugadores);
   let pasaDirecto = null;
@@ -54,18 +65,7 @@ function armarDuelos(jugadores, rondaNum, yaDescansaron = []) {
   let n = 1;
 
   while (pool.length >= 2) {
-    const a = pool.shift();
-    const b = pool.shift();
-    const menor = valorDe(a) <= valorDe(b) ? a : b;
-
-    duelos.push({
-      id: `r${rondaNum}d${n++}`,
-      a, b,
-      menor: menor.userId,
-      tiers: diferenciaTiers(a, b),
-      bans: bansDelMenor(a, b),
-      ganador: null,
-    });
+    duelos.push(crearDuelo(`r${rondaNum}d${n++}`, pool.shift(), pool.shift()));
   }
 
   return { duelos, pasaDirecto };
@@ -83,6 +83,9 @@ async function iniciar(inscritos) {
     pasaDirecto,
     yaDescansaron: pasaDirecto ? [pasaDirecto.userId] : [],
     campeon: null,
+    subcampeon: null,
+    tercero: null,
+    cuarto: null,
   };
 
   await guardar(torneo);
@@ -105,22 +108,70 @@ async function registrarGanador(dueloId, userId) {
 
 const rondaCompleta = torneo => torneo.duelos.every(d => d.ganador);
 
-// Cierra la ronda: si queda uno solo hay campeon, si no arma la siguiente
+const ganadorDe = d => (d.ganador === d.a.userId ? d.a : d.b);
+const perdedorDe = d => (d.ganador === d.a.userId ? d.b : d.a);
+
+// Cierra la ronda: arma la siguiente, monta la final o proclama el podio
 async function avanzarRonda() {
   const torneo = estado();
   if (!torneo || !rondaCompleta(torneo)) return null;
 
-  const clasificados = torneo.duelos
-    .map(d => (d.ganador === d.a.userId ? d.a : d.b));
-  if (torneo.pasaDirecto) clasificados.push(torneo.pasaDirecto);
+  // Ronda final ya resuelta: se reparte el podio
+  const dueloFinal = torneo.duelos.find(d => d.tipo === 'final');
+  if (dueloFinal) {
+    torneo.campeon = ganadorDe(dueloFinal);
+    torneo.subcampeon = perdedorDe(dueloFinal);
 
+    const dueloTercero = torneo.duelos.find(d => d.tipo === 'tercero');
+    if (dueloTercero) {
+      torneo.tercero = ganadorDe(dueloTercero);
+      torneo.cuarto = perdedorDe(dueloTercero);
+    }
+
+    await guardar(torneo);
+    return torneo;
+  }
+
+  const clasificados = torneo.duelos.map(ganadorDe);
+  if (torneo.pasaDirecto) clasificados.push(torneo.pasaDirecto);
+  const perdedores = torneo.duelos.map(perdedorDe);
+
+  // Torneo de solo dos jugadores: esa primera ronda ya era la final
   if (clasificados.length === 1) {
     torneo.campeon = clasificados[0];
+    torneo.subcampeon = perdedores[0] || null;
     await guardar(torneo);
     return torneo;
   }
 
   const siguiente = torneo.ronda + 1;
+
+  // Quedan dos: esta ronda era la semifinal. Se monta la final y, si dejo dos
+  // eliminados, tambien el duelo por el bronce. Si con los descansos solo dejo
+  // uno, ese es tercero directo y no hay nada que disputar.
+  if (clasificados.length === 2) {
+    const duelos = [crearDuelo(`r${siguiente}final`, clasificados[0], clasificados[1], 'final')];
+    let tercero = null;
+
+    if (perdedores.length >= 2) {
+      duelos.push(crearDuelo(`r${siguiente}tercero`, perdedores[0], perdedores[1], 'tercero'));
+    } else if (perdedores.length === 1) {
+      tercero = perdedores[0];
+    }
+
+    Object.assign(torneo, {
+      ronda: siguiente,
+      jugadoresRonda: duelos.length * 2,
+      nombreRonda: '🏆 Final',
+      duelos,
+      pasaDirecto: null,
+      tercero,
+    });
+
+    await guardar(torneo);
+    return torneo;
+  }
+
   const yaDescansaron = torneo.yaDescansaron || [];
   const { duelos, pasaDirecto } = armarDuelos(clasificados, siguiente, yaDescansaron);
 

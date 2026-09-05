@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder,
   ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags} = require('discord.js');
 const {
-  inscritos, borrarInscritos, desinscribir, marcarPendientes,
+  inscritos, borrarInscritos, desinscribir, marcarPendientes, marcarConfirmacion,
   nombreRango, iconoConfirmacion, BANS_MAX,
 } = require('../utils/coliseo');
 const torneo = require('../utils/coliseoTorneo');
@@ -32,6 +32,18 @@ module.exports = {
     .addSubcommand(s => s
       .setName('confirmar')
       .setDescription('Manda un DM a los inscritos para que confirmen asistencia'))
+    .addSubcommand(s => s
+      .setName('marcar')
+      .setDescription('Marca a mano si alguien asiste o no (para quien no recibió el DM)')
+      .addStringOption(o => o
+        .setName('riotid')
+        .setDescription('Riot ID del inscrito (empieza a escribir para buscar)')
+        .setRequired(true)
+        .setAutocomplete(true))
+      .addBooleanOption(o => o
+        .setName('asiste')
+        .setDescription('Sí = confirmado ✅ · No = no asiste ❌')
+        .setRequired(true)))
     .addSubcommand(s => s
       .setName('reiniciar')
       .setDescription('Borra todas las inscripciones'))
@@ -173,6 +185,22 @@ module.exports = {
         resumen += `\n⚠️ No pude escribirle a **${fallidos.length}**: ${fallidos.map(f => f.riotId).join(', ')}`;
       }
       return interaction.editReply(resumen);
+    }
+
+    if (sub === 'marcar') {
+      const riotid = interaction.options.getString('riotid');
+      const asiste = interaction.options.getBoolean('asiste');
+      const match = inscritos().find(i => i.riotId.toLowerCase() === riotid.toLowerCase());
+      if (!match) {
+        return interaction.reply({ content: `No encontré a nadie inscrito con el Riot ID **${riotid}**.`, flags: MessageFlags.Ephemeral });
+      }
+      await marcarConfirmacion(match.userId, asiste);
+      return interaction.reply({
+        content: asiste
+          ? `✅ **${match.riotId}** queda confirmado para el Coliseo.`
+          : `❌ **${match.riotId}** queda marcado como que no asiste.`,
+        flags: MessageFlags.Ephemeral,
+      });
     }
 
     if (sub === 'reiniciar') {

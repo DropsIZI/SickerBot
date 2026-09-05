@@ -80,8 +80,14 @@ function bansDelMenor(a, b) {
 const inscritos = () => storage.getConfig().coliseoInscritos || [];
 
 async function inscribir(entrada) {
+  // Al reinscribirse (corregir el Riot ID, cambiar de cuenta o de rango) se
+  // conserva la confirmacion de asistencia: si no, quien ya habia dicho que
+  // si volveria a ▫️ y se caeria del sorteo sin enterarse.
+  const previo = inscritos().find(i => i.userId === entrada.userId);
   const lista = inscritos().filter(i => i.userId !== entrada.userId);
-  lista.push(entrada);
+  lista.push(previo?.confirmado !== undefined
+    ? { ...entrada, confirmado: previo.confirmado }
+    : entrada);
   const config = storage.getConfig();
   await storage.setConfig({ ...config, coliseoInscritos: lista });
   return lista.length;

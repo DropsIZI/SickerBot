@@ -12,9 +12,15 @@ function mensajeDuelo(duelo, torneo) {
 
   const menor = duelo.menor === duelo.a.userId ? duelo.a : duelo.b;
 
+  const titulo = duelo.tipo === 'final'
+    ? '🏆 Duelo por el título'
+    : duelo.tipo === 'tercero'
+      ? '🥉 Duelo por el 3er puesto'
+      : `${torneo.nombreRonda} · Duelo ${duelo.id.split('d')[1]}`;
+
   const embed = new EmbedBuilder()
-    .setColor(duelo.ganador ? 0x2ECC71 : 0x8B0000)
-    .setTitle(`${duelo.ganador ? '✅' : '⚔️'}  ${torneo.nombreRonda} · Duelo ${duelo.id.split('d')[1]}`)
+    .setColor(duelo.ganador ? 0x2ECC71 : duelo.tipo === 'final' ? 0xFFD700 : 0x8B0000)
+    .setTitle(`${duelo.ganador ? '✅' : '⚔️'}  ${titulo}`)
     .setDescription(
       `<@${duelo.a.userId}>\n\`${duelo.a.riotId}\` · ${nombreRango(duelo.a)}\n\n` +
       `**⚔️ vs**\n\n` +
@@ -68,8 +74,11 @@ function cabeceraRonda(torneo) {
   return embed;
 }
 
-function anuncioCampeon(torneo) {
-  return new EmbedBuilder()
+const linea = (medalla, j) =>
+  `${medalla} <@${j.userId}>\n\`${j.riotId}\` · ${nombreRango(j)}`;
+
+function anuncioPodio(torneo) {
+  const embed = new EmbedBuilder()
     .setColor(0xFFD700)
     .setTitle('👑  ¡CAMPEÓN DEL COLISEO!')
     .setDescription(
@@ -80,6 +89,16 @@ function anuncioCampeon(torneo) {
     )
     .setFooter({ text: 'Coliseo del Abismo ⚔️' })
     .setTimestamp();
+
+  const podio = [linea('🥇', torneo.campeon)];
+  if (torneo.subcampeon) podio.push(linea('🥈', torneo.subcampeon));
+  if (torneo.tercero) podio.push(linea('🥉', torneo.tercero));
+
+  if (podio.length > 1) {
+    embed.addFields({ name: '🏅 Podio', value: podio.join('\n\n') });
+  }
+
+  return embed;
 }
 
-module.exports = { mensajeDuelo, cabeceraRonda, anuncioCampeon };
+module.exports = { mensajeDuelo, cabeceraRonda, anuncioPodio };
