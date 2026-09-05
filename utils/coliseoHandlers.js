@@ -130,9 +130,21 @@ async function ejecutarSorteo(interaction) {
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const lista = inscritos();
+  const todos = inscritos();
+
+  // Si ya se paso una ronda de confirmacion, solo entran los que dijeron que
+  // si. Si nunca se uso /coliseo confirmar, entran todos como siempre.
+  const hayConfirmaciones = todos.some(i => i.confirmado !== undefined);
+  const lista = hayConfirmaciones ? todos.filter(i => i.confirmado === true) : todos;
+  const fuera = todos.length - lista.length;
+
   if (lista.length < 2) {
-    return interaction.editReply('❌ Hacen falta al menos **2** inscritos.');
+    return interaction.editReply(
+      hayConfirmaciones
+        ? `❌ Solo hay **${lista.length}** inscrito(s) confirmado(s), hacen falta al menos **2**.\n` +
+          'Usa `/coliseo confirmar` para pedir confirmación otra vez, o revisa la lista con `/coliseo lista`.'
+        : '❌ Hacen falta al menos **2** inscritos.'
+    );
   }
 
   const enCurso = torneo.estado();
@@ -146,10 +158,14 @@ async function ejecutarSorteo(interaction) {
   const nuevo = await torneo.iniciar(lista);
   await publicarRonda(interaction.channel, nuevo);
 
-  return interaction.editReply(
-    `✅ Torneo iniciado con **${lista.length}** participantes.\n` +
-    `${nuevo.nombreRonda} · **${nuevo.duelos.length}** duelos.`
-  );
+  let resumen = `✅ Torneo iniciado con **${lista.length}** participantes.\n` +
+    `${nuevo.nombreRonda} · **${nuevo.duelos.length}** duelos.`;
+  if (fuera) resumen += `\n🚫 **${fuera}** inscrito(s) quedaron fuera por no confirmar asistencia.`;
+  if (nuevo.pasaDirecto) {
+    resumen += `\n🎟️ Número impar: **${nuevo.pasaDirecto.riotId}** pasa sin jugar esta ronda.`;
+  }
+
+  return interaction.editReply(resumen);
 }
 
 // Boton "Gano X" -> marca el ganador y, si la ronda esta lista, avanza

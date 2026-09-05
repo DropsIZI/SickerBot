@@ -37,8 +37,19 @@ const mezclar = arr => {
 };
 
 // Empareja de dos en dos. Si sobra alguien, pasa de ronda sin jugar.
-function armarDuelos(jugadores, rondaNum) {
+//
+// Con un numero impar el descanso se reparte: se elige entre quienes todavia
+// no han pasado sin jugar, para que no le toque dos veces al mismo mientras
+// haya gente que aun no ha descansado.
+function armarDuelos(jugadores, rondaNum, yaDescansaron = []) {
   const pool = mezclar(jugadores);
+  let pasaDirecto = null;
+
+  if (pool.length % 2 === 1) {
+    const i = pool.findIndex(j => !yaDescansaron.includes(j.userId));
+    pasaDirecto = pool.splice(i === -1 ? 0 : i, 1)[0];
+  }
+
   const duelos = [];
   let n = 1;
 
@@ -57,7 +68,7 @@ function armarDuelos(jugadores, rondaNum) {
     });
   }
 
-  return { duelos, pasaDirecto: pool[0] || null };
+  return { duelos, pasaDirecto };
 }
 
 async function iniciar(inscritos) {
@@ -70,6 +81,7 @@ async function iniciar(inscritos) {
     nombreRonda: nombreRonda(inscritos.length),
     duelos,
     pasaDirecto,
+    yaDescansaron: pasaDirecto ? [pasaDirecto.userId] : [],
     campeon: null,
   };
 
@@ -109,7 +121,8 @@ async function avanzarRonda() {
   }
 
   const siguiente = torneo.ronda + 1;
-  const { duelos, pasaDirecto } = armarDuelos(clasificados, siguiente);
+  const yaDescansaron = torneo.yaDescansaron || [];
+  const { duelos, pasaDirecto } = armarDuelos(clasificados, siguiente, yaDescansaron);
 
   Object.assign(torneo, {
     ronda: siguiente,
@@ -117,6 +130,7 @@ async function avanzarRonda() {
     nombreRonda: nombreRonda(clasificados.length),
     duelos,
     pasaDirecto,
+    yaDescansaron: pasaDirecto ? [...yaDescansaron, pasaDirecto.userId] : yaDescansaron,
   });
 
   await guardar(torneo);

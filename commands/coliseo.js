@@ -88,7 +88,9 @@ module.exports = {
           '## 🎲 Sorteo de duelos\n\n' +
           'Pulsa el botón para emparejar al azar a los inscritos.\n\n' +
           '> Se mostrará la diferencia de rango de cada duelo y cuántos\n' +
-          '> campeones podrá vetar el jugador de menor elo.'
+          '> campeones podrá vetar el jugador de menor elo.\n' +
+          '> ✅ Si ya se pidió confirmación, solo entran quienes confirmaron.\n' +
+          '> 🎟️ Si son impares, uno pasa sin jugar (se turna cada ronda).'
         )
         .setFooter({ text: 'Solo los administradores pueden sortear' });
 
