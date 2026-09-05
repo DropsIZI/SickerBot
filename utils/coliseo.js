@@ -65,6 +65,9 @@ const nombreRango = r => {
   return t.sinDivision ? `${t.emoji} ${t.nombre}` : `${t.emoji} ${t.nombre} ${DIVISIONES[r.division]}`;
 };
 
+const iconoConfirmacion = confirmado =>
+  confirmado === true ? '✅' : confirmado === false ? '❌' : confirmado === 'pendiente' ? '⏳' : '▫️';
+
 // Diferencia en tiers completos, que es la unidad con la que se reparten bans
 const diferenciaTiers = (a, b) => Math.abs(a.tier - b.tier);
 
@@ -94,6 +97,25 @@ async function desinscribir(userId) {
   const config = storage.getConfig();
   await storage.setConfig({ ...config, coliseoInscritos: lista });
   return lista.length;
+}
+
+// --- Confirmacion de asistencia ---
+// confirmado: undefined (nunca se le preguntó) | 'pendiente' | true | false
+
+async function marcarPendientes(userIds) {
+  const lista = inscritos().map(i =>
+    userIds.includes(i.userId) ? { ...i, confirmado: 'pendiente' } : i
+  );
+  const config = storage.getConfig();
+  await storage.setConfig({ ...config, coliseoInscritos: lista });
+}
+
+async function marcarConfirmacion(userId, valor) {
+  const lista = inscritos().map(i =>
+    i.userId === userId ? { ...i, confirmado: valor } : i
+  );
+  const config = storage.getConfig();
+  await storage.setConfig({ ...config, coliseoInscritos: lista });
 }
 
 // --- Sorteo ---
@@ -129,6 +151,7 @@ function sortear(lista) {
 
 module.exports = {
   TIERS, DIVISIONES, BANS_MAX,
-  parsearRango, valorDe, nombreRango, diferenciaTiers, bansDelMenor,
-  inscritos, inscribir, borrarInscritos, desinscribir, sortear,
+  parsearRango, valorDe, nombreRango, iconoConfirmacion, diferenciaTiers, bansDelMenor,
+  inscritos, inscribir, borrarInscritos, desinscribir,
+  marcarPendientes, marcarConfirmacion, sortear,
 };

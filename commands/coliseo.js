@@ -1,7 +1,10 @@
 const {
   SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder,
   ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags} = require('discord.js');
-const { inscritos, borrarInscritos, desinscribir, nombreRango, BANS_MAX } = require('../utils/coliseo');
+const {
+  inscritos, borrarInscritos, desinscribir, marcarPendientes,
+  nombreRango, iconoConfirmacion, BANS_MAX,
+} = require('../utils/coliseo');
 const torneo = require('../utils/coliseoTorneo');
 
 module.exports = {
@@ -26,6 +29,9 @@ module.exports = {
         .setDescription('Riot ID del inscrito (empieza a escribir para buscar)')
         .setRequired(true)
         .setAutocomplete(true)))
+    .addSubcommand(s => s
+      .setName('confirmar')
+      .setDescription('Manda un DM a los inscritos para que confirmen asistencia'))
     .addSubcommand(s => s
       .setName('reiniciar')
       .setDescription('Borra todas las inscripciones'))
@@ -106,7 +112,7 @@ module.exports = {
       const texto = lista
         .slice()
         .sort((a, b) => (b.tier * 4 + b.division) - (a.tier * 4 + a.division))
-        .map((i, n) => `\`${String(n + 1).padStart(2)}\` <@${i.userId}> · **${i.riotId}** · ${nombreRango(i)}`)
+        .map((i, n) => `\`${String(n + 1).padStart(2)}\` ${iconoConfirmacion(i.confirmado)} <@${i.userId}> · **${i.riotId}** · ${nombreRango(i)}`)
         .join('\n');
 
       return interaction.reply({
@@ -126,6 +132,45 @@ module.exports = {
       }
       await desinscribir(match.userId);
       return interaction.reply({ content: `✅ Saqué a **${match.riotId}** (<@${match.userId}>) de la lista de inscritos.`, flags: MessageFlags.Ephemeral });
+    }
+
+    if (sub === 'confirmar') {
+      const pendientes = inscritos().filter(i => i.confirmado !== true);
+      if (!pendientes.length) {
+        return interaction.reply({ content: 'Todos los inscritos ya confirmaron su asistencia.', flags: MessageFlags.Ephemeral });
+      }
+
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+      const enviados = [];
+      const fallidos = [];
+
+      for (const i of pendientes) {
+        try {
+          const usuario = await interaction.client.users.fetch(i.userId);
+          await usuario.send({
+            embeds: [new EmbedBuilder()
+              .setColor(0x0F2027)
+              .setTitle('⚔️ Confirma tu asistencia al Coliseo del Abismo')
+              .setDescription(`Estás inscrito como **${i.riotId}**.\n\n¿Vas a poder jugar? Confirma abajo.`)],
+            components: [new ActionRowBuilder().addComponents(
+              new ButtonBuilder().setCustomId('coliseo:confirmar:si').setLabel('Sí, confirmo').setEmoji('✅').setStyle(ButtonStyle.Success),
+              new ButtonBuilder().setCustomId('coliseo:confirmar:no').setLabel('No podré ir').setEmoji('❌').setStyle(ButtonStyle.Danger),
+            )],
+          });
+          enviados.push(i.userId);
+        } catch {
+          fallidos.push(i);
+        }
+      }
+
+      if (enviados.length) await marcarPendientes(enviados);
+
+      let resumen = `✅ DM enviado a **${enviados.length}** inscrito(s).`;
+      if (fallidos.length) {
+        resumen += `\n⚠️ No pude escribirle a **${fallidos.length}**: ${fallidos.map(f => f.riotId).join(', ')}`;
+      }
+      return interaction.editReply(resumen);
     }
 
     if (sub === 'reiniciar') {

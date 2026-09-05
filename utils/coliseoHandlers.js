@@ -2,7 +2,8 @@ const {
   EmbedBuilder, ModalBuilder, TextInputBuilder,
   TextInputStyle, ActionRowBuilder, PermissionFlagsBits, MessageFlags} = require('discord.js');
 const {
-  parsearRango, nombreRango, inscritos, inscribir, desinscribir, TIERS,
+  parsearRango, nombreRango, inscritos, inscribir, desinscribir,
+  marcarConfirmacion, TIERS,
 } = require('./coliseo');
 const torneo = require('./coliseoTorneo');
 const { mensajeDuelo, cabeceraRonda, anuncioCampeon } = require('./coliseoRender');
@@ -95,6 +96,24 @@ async function desinscribirse(interaction) {
   return interaction.reply({ content: '✅ Te saqué de la lista de inscritos. ¡Vuelve cuando quieras!', flags: MessageFlags.Ephemeral });
 }
 
+// Botones "Sí"/"No" del DM de confirmacion -> registra la respuesta
+async function confirmarAsistencia(interaction, valor) {
+  const yo = inscritos().find(i => i.userId === interaction.user.id);
+  if (!yo) {
+    return interaction.update({ content: 'Ya no estás en la lista de inscritos del Coliseo.', embeds: [], components: [] });
+  }
+
+  await marcarConfirmacion(interaction.user.id, valor);
+
+  return interaction.update({
+    content: valor
+      ? '✅ ¡Gracias! Quedaste confirmado para el Coliseo del Abismo.'
+      : '❌ Anotado, no cuentas para esta ronda. ¡Nos vemos en la próxima!',
+    embeds: [],
+    components: [],
+  });
+}
+
 // Publica la cabecera de la ronda y un mensaje por duelo
 async function publicarRonda(canal, torneo) {
   await canal.send({ embeds: [cabeceraRonda(torneo)] });
@@ -162,4 +181,4 @@ async function marcarGanador(interaction) {
   await publicarRonda(interaction.channel, siguiente);
 }
 
-module.exports = { abrirFormulario, guardarInscripcion, desinscribirse, ejecutarSorteo, marcarGanador };
+module.exports = { abrirFormulario, guardarInscripcion, desinscribirse, confirmarAsistencia, ejecutarSorteo, marcarGanador };

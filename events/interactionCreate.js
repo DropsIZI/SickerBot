@@ -13,6 +13,12 @@ module.exports = {
         if (interaction.isButton() && interaction.customId === 'coliseo:desinscribir') {
           return await coliseo.desinscribirse(interaction);
         }
+        if (interaction.isButton() && interaction.customId === 'coliseo:confirmar:si') {
+          return await coliseo.confirmarAsistencia(interaction, true);
+        }
+        if (interaction.isButton() && interaction.customId === 'coliseo:confirmar:no') {
+          return await coliseo.confirmarAsistencia(interaction, false);
+        }
         if (interaction.isModalSubmit() && interaction.customId === 'coliseo:form') {
           return await coliseo.guardarInscripcion(interaction);
         }

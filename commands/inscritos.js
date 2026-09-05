@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags} = require('discord.js');
-const { inscritos, nombreRango, TIERS, valorDe } = require('../utils/coliseo');
+const { inscritos, nombreRango, iconoConfirmacion, TIERS, valorDe } = require('../utils/coliseo');
 const torneo = require('../utils/coliseoTorneo');
 
 module.exports = {
@@ -21,7 +21,7 @@ module.exports = {
     const ordenados = [...lista].sort((a, b) => valorDe(b) - valorDe(a));
 
     const filas = ordenados.map((i, n) =>
-      `\`${String(n + 1).padStart(2)}\` ${nombreRango(i)} · **${i.riotId}** · <@${i.userId}>`
+      `\`${String(n + 1).padStart(2)}\` ${iconoConfirmacion(i.confirmado)} ${nombreRango(i)} · **${i.riotId}** · <@${i.userId}>`
     );
 
     // Cuantos hay de cada tier, para ver el nivel general del torneo
@@ -37,7 +37,7 @@ module.exports = {
       .setTitle(`⚔️  Inscritos en el Coliseo — ${lista.length}`)
       .setDescription(filas.join('\n').slice(0, 3800))
       .addFields({ name: 'Reparto por rango', value: reparto.slice(0, 1024) })
-      .setFooter({ text: 'Coliseo del Abismo ⚔️' });
+      .setFooter({ text: 'Coliseo del Abismo ⚔️ · ✅ confirmado · ⏳ pendiente · ❌ no asiste' });
 
     const actual = torneo.estado();
     if (actual && !actual.campeon) {
