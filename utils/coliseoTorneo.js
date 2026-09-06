@@ -111,6 +111,43 @@ const rondaCompleta = torneo => torneo.duelos.every(d => d.ganador);
 const ganadorDe = d => (d.ganador === d.a.userId ? d.a : d.b);
 const perdedorDe = d => (d.ganador === d.a.userId ? d.b : d.a);
 
+// Copia de la ronda antes de pisarla, para poder deshacer el avance si el
+// anfitrion marco mal al ganador del duelo que cerraba la ronda. Se guarda un
+// solo nivel (sin arrastrar la previa anterior) para no inflar el documento.
+const instantanea = t => ({
+  ronda: t.ronda,
+  jugadoresRonda: t.jugadoresRonda,
+  nombreRonda: t.nombreRonda,
+  duelos: t.duelos,
+  pasaDirecto: t.pasaDirecto,
+  yaDescansaron: t.yaDescansaron || [],
+  tercero: t.tercero || null,
+});
+
+// Deshace el ultimo avance de ronda y devuelve el torneo a como estaba
+async function retroceder() {
+  const torneo = estado();
+  if (!torneo?.previa) return null;
+
+  const p = torneo.previa;
+  Object.assign(torneo, {
+    ronda: p.ronda,
+    jugadoresRonda: p.jugadoresRonda,
+    nombreRonda: p.nombreRonda,
+    duelos: p.duelos,
+    pasaDirecto: p.pasaDirecto,
+    yaDescansaron: p.yaDescansaron,
+    tercero: p.tercero,
+    campeon: null,
+    subcampeon: null,
+    cuarto: null,
+    previa: null,
+  });
+
+  await guardar(torneo);
+  return torneo;
+}
+
 // Cierra la ronda: arma la siguiente, monta la final o proclama el podio
 async function avanzarRonda() {
   const torneo = estado();
@@ -119,6 +156,7 @@ async function avanzarRonda() {
   // Ronda final ya resuelta: se reparte el podio
   const dueloFinal = torneo.duelos.find(d => d.tipo === 'final');
   if (dueloFinal) {
+    torneo.previa = instantanea(torneo);
     torneo.campeon = ganadorDe(dueloFinal);
     torneo.subcampeon = perdedorDe(dueloFinal);
 
@@ -138,6 +176,7 @@ async function avanzarRonda() {
 
   // Torneo de solo dos jugadores: esa primera ronda ya era la final
   if (clasificados.length === 1) {
+    torneo.previa = instantanea(torneo);
     torneo.campeon = clasificados[0];
     torneo.subcampeon = perdedores[0] || null;
     await guardar(torneo);
@@ -159,7 +198,9 @@ async function avanzarRonda() {
       tercero = perdedores[0];
     }
 
+    const previa = instantanea(torneo);
     Object.assign(torneo, {
+      previa,
       ronda: siguiente,
       jugadoresRonda: duelos.length * 2,
       nombreRonda: '🏆 Final',
@@ -176,6 +217,7 @@ async function avanzarRonda() {
   const { duelos, pasaDirecto } = armarDuelos(clasificados, siguiente, yaDescansaron);
 
   Object.assign(torneo, {
+    previa: instantanea(torneo),
     ronda: siguiente,
     jugadoresRonda: clasificados.length,
     nombreRonda: nombreRonda(clasificados.length),
@@ -190,5 +232,5 @@ async function avanzarRonda() {
 
 module.exports = {
   estado, guardar, cancelar, iniciar,
-  registrarGanador, rondaCompleta, avanzarRonda, nombreRonda,
+  registrarGanador, rondaCompleta, avanzarRonda, retroceder, nombreRonda,
 };

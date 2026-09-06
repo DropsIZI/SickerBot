@@ -178,7 +178,13 @@ async function marcarGanador(interaction) {
   await interaction.deferUpdate();
 
   const actualizado = await torneo.registrarGanador(dueloId, userId);
-  if (!actualizado) return;
+  if (!actualizado) {
+    return interaction.followUp({
+      content: '❌ Este duelo ya no admite cambios: la ronda avanzó, el torneo terminó o se canceló.\n' +
+        'Usa `/coliseo retroceder` para volver a la ronda anterior y corregir el resultado.',
+      flags: MessageFlags.Ephemeral,
+    });
+  }
 
   // Refrescar el mensaje del duelo, ya sin botones
   const duelo = actualizado.duelos.find(d => d.id === dueloId);
@@ -197,4 +203,7 @@ async function marcarGanador(interaction) {
   await publicarRonda(interaction.channel, siguiente);
 }
 
-module.exports = { abrirFormulario, guardarInscripcion, desinscribirse, confirmarAsistencia, ejecutarSorteo, marcarGanador };
+module.exports = {
+  abrirFormulario, guardarInscripcion, desinscribirse, confirmarAsistencia,
+  ejecutarSorteo, marcarGanador, publicarRonda,
+};

@@ -32,19 +32,18 @@ function mensajeDuelo(duelo, torneo) {
   if (duelo.ganador) {
     const g = duelo.ganador === duelo.a.userId ? duelo.a : duelo.b;
     embed.addFields({ name: '🏅 Ganador', value: `<@${g.userId}> \`${g.riotId}\`` });
-    return { embeds: [embed], components: [] };
+    embed.setFooter({ text: '¿Te equivocaste? Pulsa el otro botón para corregirlo.' });
   }
 
-  const fila = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`coliseo:win:${duelo.id}:${duelo.a.userId}`)
-      .setLabel(`Ganó ${duelo.a.riotId}`.slice(0, 80))
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId(`coliseo:win:${duelo.id}:${duelo.b.userId}`)
-      .setLabel(`Ganó ${duelo.b.riotId}`.slice(0, 80))
-      .setStyle(ButtonStyle.Success),
-  );
+  // Los botones se quedan aunque ya haya ganador: en directo es facil pulsar el
+  // que no era, y basta con pulsar el otro para rectificar. Cuando la ronda
+  // avanza estos botones dejan de aceptar cambios por si solos.
+  const boton = j => new ButtonBuilder()
+    .setCustomId(`coliseo:win:${duelo.id}:${j.userId}`)
+    .setLabel(`${duelo.ganador === j.userId ? '✅ ' : ''}Ganó ${j.riotId}`.slice(0, 80))
+    .setStyle(!duelo.ganador || duelo.ganador === j.userId ? ButtonStyle.Success : ButtonStyle.Secondary);
+
+  const fila = new ActionRowBuilder().addComponents(boton(duelo.a), boton(duelo.b));
 
   return { embeds: [embed], components: [fila] };
 }

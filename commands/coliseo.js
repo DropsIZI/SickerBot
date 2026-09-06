@@ -6,6 +6,7 @@ const {
   nombreRango, iconoConfirmacion, BANS_MAX,
 } = require('../utils/coliseo');
 const torneo = require('../utils/coliseoTorneo');
+const { publicarRonda } = require('../utils/coliseoHandlers');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -47,6 +48,9 @@ module.exports = {
     .addSubcommand(s => s
       .setName('reiniciar')
       .setDescription('Borra todas las inscripciones'))
+    .addSubcommand(s => s
+      .setName('retroceder')
+      .setDescription('Deshace la última ronda para corregir un ganador mal marcado'))
     .addSubcommand(s => s
       .setName('cancelar')
       .setDescription('Descarta el torneo en curso sin tocar las inscripciones')),
@@ -211,6 +215,27 @@ module.exports = {
         content: `✅ Borradas **${cuantos}** inscripciones y el torneo en curso.`,
         flags: MessageFlags.Ephemeral,
       });
+    }
+
+    if (sub === 'retroceder') {
+      const actual = torneo.estado();
+      if (!actual) return interaction.reply({ content: 'No hay ningún torneo en curso.', flags: MessageFlags.Ephemeral });
+      if (!actual.previa) {
+        return interaction.reply({
+          content: 'No hay ninguna ronda que deshacer. Solo se puede volver atrás una vez, justo después de que la ronda avance.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+      const previo = await torneo.retroceder();
+      await publicarRonda(interaction.channel, previo);
+
+      return interaction.editReply(
+        `✅ Vuelta atrás a **${previo.nombreRonda}**.\n` +
+        'Republiqué los duelos: pulsa el botón correcto y la ronda volverá a avanzar sola.'
+      );
     }
 
     if (sub === 'cancelar') {
