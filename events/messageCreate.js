@@ -1,35 +1,65 @@
 const { addXP, isOnCooldown, setCooldown, getLevelUpMessage, loadConfig } = require('../utils/levelManager');
-const { construirLectura, interpretar } = require('../utils/tarotLectura');
+const tarot = require('../utils/tarotLectura');
+const zodiaco = require('../utils/zodiaco');
+const zodiacoRender = require('../utils/zodiacoRender');
 
-// El prefijo tira las cartas en cualquier canal, sin la restriccion de
-// tarotChannel que sí aplica a /tarot. Cada tirada sube entre una y tres
-// imagenes, asi que se limita por usuario para que no se pueda spamear.
-const PREFIJO_TAROT = '!tarot';
-const ESPERA_TAROT = 30_000;
-const ultimaTirada = new Map();
+// Comandos por prefijo. Funcionan en cualquier canal, a diferencia de /tarot,
+// que respeta tarotChannel. Cada uno lleva su propia espera por usuario: el
+// tarot sube entre una y tres imagenes por tirada, el zodiaco es solo texto.
+const COMANDOS = [
+  { prefijo: '!tarot', espera: 30_000, maneja: responderTarot, ocupado: '🔮 Las cartas necesitan reposar. Vuelve en **%s**.' },
+  { prefijo: '!zodiaco', espera: 10_000, maneja: responderZodiaco, ocupado: '✦ Los astros van despacio. Vuelve en **%s**.' },
+];
 
-async function tirarTarot(message, texto) {
+const ultimoUso = new Map();
+
+function responderTarot(message, resto) {
+  const { tipo, pregunta } = tarot.interpretar(resto);
+  return {
+    ...tarot.construirLectura({ tipo, pregunta, usuario: message.author }),
+    allowedMentions: { repliedUser: false, parse: [] },
+  };
+}
+
+function responderZodiaco(message, resto) {
+  const r = zodiaco.interpretar(resto);
+
+  const embed = r.tipo === 'signo' ? zodiacoRender.fichaSigno(r.signo, { usuario: message.author, fecha: r.fecha })
+    : r.tipo === 'mes' ? zodiacoRender.fichaMes(r.mes, r.signos)
+      : r.tipo === 'vacio' ? zodiacoRender.ayuda()
+        : zodiacoRender.noEntendido();
+
+  return { embeds: [embed], allowedMentions: { repliedUser: false, parse: [] } };
+}
+
+// Reconoce el prefijo solo si termina en espacio o en fin de mensaje, para que
+// !tarotazo o !zodiacos sigan siendo mensajes normales
+function detectar(texto) {
+  const bajo = texto.toLowerCase();
+  return COMANDOS.find(c => {
+    if (!bajo.startsWith(c.prefijo)) return false;
+    const sigue = texto.charAt(c.prefijo.length);
+    return !sigue || sigue === ' ';
+  }) || null;
+}
+
+async function atender(message, texto, comando) {
+  const clave = `${comando.prefijo}:${message.author.id}`;
   const ahora = Date.now();
-  const previa = ultimaTirada.get(message.author.id);
-  if (previa && ahora - previa < ESPERA_TAROT) {
-    const quedan = Math.ceil((ESPERA_TAROT - (ahora - previa)) / 1000);
-    const aviso = await message
-      .reply(`🔮 Las cartas necesitan reposar. Vuelve en **${quedan}s**.`)
-      .catch(() => null);
+  const previa = ultimoUso.get(clave);
+
+  if (previa && ahora - previa < comando.espera) {
+    const quedan = `${Math.ceil((comando.espera - (ahora - previa)) / 1000)}s`;
+    const aviso = await message.reply(comando.ocupado.replace('%s', quedan)).catch(() => null);
     if (aviso) setTimeout(() => aviso.delete().catch(() => {}), 5000);
     return;
   }
-  ultimaTirada.set(message.author.id, ahora);
-
-  const { tipo, pregunta } = interpretar(texto.slice(PREFIJO_TAROT.length));
+  ultimoUso.set(clave, ahora);
 
   try {
-    await message.reply({
-      ...construirLectura({ tipo, pregunta, usuario: message.author }),
-      allowedMentions: { repliedUser: false, parse: [] },
-    });
+    await message.reply(comando.maneja(message, texto.slice(comando.prefijo.length)));
   } catch (err) {
-    console.error('[!tarot]', err);
+    console.error(`[${comando.prefijo}]`, err);
   }
 }
 
@@ -39,13 +69,10 @@ module.exports = {
     if (message.author.bot || !message.guild) return;
 
     // Va antes del cooldown de XP: si no, quien acabara de escribir no podria
-    // tirar las cartas hasta que se le pasara el enfriamiento de niveles
+    // usar estos comandos hasta que se le pasara el enfriamiento de niveles
     const texto = message.content.trimStart();
-    if (texto.toLowerCase().startsWith(PREFIJO_TAROT)) {
-      const sigue = texto.charAt(PREFIJO_TAROT.length);
-      // Evita que !tarotazo u otra palabra que empiece igual dispare la tirada
-      if (!sigue || sigue === ' ') await tirarTarot(message, texto);
-    }
+    const comando = detectar(texto);
+    if (comando) await atender(message, texto, comando);
 
     if (isOnCooldown(message.author.id)) return;
     setCooldown(message.author.id);
