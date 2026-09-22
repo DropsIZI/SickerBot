@@ -3,6 +3,9 @@ const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { SIGNOS, NOMBRE_MES, ARCHIVOS, tramoDe } = require('./zodiaco');
+const { lecturaDelMes, lecturaDelDia } = require('./zodiacoTextos');
+
+const capitalizar = t => t.charAt(0).toUpperCase() + t.slice(1);
 
 const COLOR = {
   Fuego: 0xE25822,
@@ -71,6 +74,24 @@ function fichaSigno(signo, { usuario = null, fecha = null } = {}) {
 
   if (fecha) {
     embed.setAuthor({ name: `Nacido el ${fecha.dia} de ${NOMBRE_MES[fecha.mes]}` });
+  }
+
+  // La lectura del mes es la misma para todo el signo y cambia al cambiar de
+  // mes; el titulo pone el mes en curso, no el del cumpleanos
+  const mes = lecturaDelMes(signo);
+  if (mes) {
+    const ahora = new Date();
+    embed.addFields({
+      name: `✦ ${capitalizar(NOMBRE_MES[ahora.getMonth() + 1])} para ${signo.nombre}`,
+      value: `> ${mes}`,
+    });
+  }
+
+  // El diario solo se muestra cuando la persona dio su fecha: ahi el signo es
+  // suyo. Si solo esta mirando la ficha de otro signo, no viene a cuento.
+  if (fecha && usuario) {
+    const dia = lecturaDelDia(signo, usuario.id);
+    if (dia) embed.addFields({ name: '🌙 Hoy para ti', value: `> ${dia}` });
   }
 
   embed.setFooter({
