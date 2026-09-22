@@ -24,12 +24,13 @@ function responderTarot(message, resto) {
 function responderZodiaco(message, resto) {
   const r = zodiaco.interpretar(resto);
 
-  const embed = r.tipo === 'signo' ? zodiacoRender.fichaSigno(r.signo, { usuario: message.author, fecha: r.fecha })
-    : r.tipo === 'mes' ? zodiacoRender.fichaMes(r.mes, r.signos)
-      : r.tipo === 'vacio' ? zodiacoRender.ayuda()
-        : zodiacoRender.noEntendido();
+  const payload = r.tipo === 'signo'
+    ? zodiacoRender.mensajeSigno(r.signo, { usuario: message.author, fecha: r.fecha })
+    : r.tipo === 'mes' ? zodiacoRender.mensajeMes(r.mes, r.signos)
+      : r.tipo === 'vacio' ? zodiacoRender.mensajeAyuda()
+        : zodiacoRender.mensajeNoEntendido();
 
-  return { embeds: [embed], allowedMentions: { repliedUser: false, parse: [] } };
+  return { ...payload, allowedMentions: { repliedUser: false, parse: [] } };
 }
 
 // Reconoce el prefijo solo si termina en espacio o en fin de mensaje, para que
