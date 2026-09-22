@@ -116,6 +116,25 @@ const SIGNOS = [
   },
 ];
 
+// Como se puede llamar el archivo de imagen de cada signo, ademas de su slug
+// y su nombre. El arte se sube a mano y los nombres llegan con faltas o en
+// otras lenguas (Canser, aquario, picis), asi que en vez de exigir un nombre
+// exacto se acepta cualquiera de estas formas.
+const ARCHIVOS = {
+  aries: ['aries', 'aris'],
+  tauro: ['tauro', 'taurus', 'toro'],
+  geminis: ['geminis', 'gemini', 'geminix'],
+  cancer: ['cancer', 'canser', 'kancer', 'cangrejo'],
+  leo: ['leo', 'leon'],
+  virgo: ['virgo', 'virgen'],
+  libra: ['libra', 'balanza'],
+  escorpio: ['escorpio', 'escorpion', 'scorpio', 'escorpius'],
+  sagitario: ['sagitario', 'sagitarius', 'sagittarius', 'sagitarion'],
+  capricornio: ['capricornio', 'capricorn', 'capricornius'],
+  acuario: ['acuario', 'aquario', 'aquarius', 'acuarius'],
+  piscis: ['piscis', 'picis', 'pisis', 'pises', 'pisces'],
+};
+
 const MESES = {
   enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
   julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10,
@@ -204,6 +223,6 @@ function interpretar(texto) {
 }
 
 module.exports = {
-  SIGNOS, MESES, NOMBRE_MES,
+  SIGNOS, MESES, NOMBRE_MES, ARCHIVOS,
   signoDe, signosDelMes, buscarSigno, tramoDe, fechaValida, interpretar,
 };

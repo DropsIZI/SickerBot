@@ -2,7 +2,7 @@
 const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { SIGNOS, NOMBRE_MES, tramoDe } = require('./zodiaco');
+const { SIGNOS, NOMBRE_MES, ARCHIVOS, tramoDe } = require('./zodiaco');
 
 const COLOR = {
   Fuego: 0xE25822,
@@ -46,8 +46,14 @@ function imagenes() {
 }
 
 const buscarImagen = signo => {
-  const archivo = imagenes().get(normalizar(signo.slug)) || imagenes().get(normalizar(signo.nombre));
-  return archivo ? path.join(DIR_SIGNOS, archivo) : null;
+  const disponibles = imagenes();
+  const candidatos = [signo.slug, signo.nombre, ...(ARCHIVOS[signo.slug] || [])];
+
+  for (const c of candidatos) {
+    const archivo = disponibles.get(normalizar(c));
+    if (archivo) return path.join(DIR_SIGNOS, archivo);
+  }
+  return null;
 };
 
 function fichaSigno(signo, { usuario = null, fecha = null } = {}) {
