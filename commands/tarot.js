@@ -1,45 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder, MessageFlags} = require('discord.js');
-const fs = require('fs');
-const path = require('path');
-const {
-  cartaDelDia, cartaAlAzar, tirada,
-  consejoDe, lecturaDe, sintesisDe, lecturaConjunta, apertura,
-} = require('../utils/tarot');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { loadConfig } = require('../utils/levelManager');
-const { detectarTema } = require('../utils/tarotTemas');
-
-const DIR_CARTAS = path.join(__dirname, '../assets/tarot');
-const POSICIONES = ['🕰️ Pasado', '✨ Presente', '🔮 Futuro'];
-
-// Busca la imagen de la carta, aceptando varias extensiones
-function buscarImagen(slug) {
-  for (const ext of ['png', 'jpg', 'jpeg', 'webp']) {
-    const ruta = path.join(DIR_CARTAS, `${slug}.${ext}`);
-    if (fs.existsSync(ruta)) return ruta;
-  }
-  return null;
-}
-
-function embedCarta(sacada, titulo) {
-  const { carta, invertida } = sacada;
-  const p = invertida ? 'i' : 'd';
-
-  const embed = new EmbedBuilder()
-    .setColor(invertida ? 0x6B4E8C : 0xB8860B)
-    .setTitle(`${carta.emoji}  ${carta.nombre}${invertida ? '  · invertida' : ''}`)
-    .setDescription(`*${carta.clave[p]}*\n\n${lecturaDe(sacada)}`)
-    .addFields({ name: 'En síntesis', value: `> ${sintesisDe(sacada)}` });
-
-  const consejo = consejoDe(sacada);
-  if (consejo) embed.addFields({ name: 'Consejo', value: `> ${consejo}` });
-
-  if (titulo) embed.setAuthor({ name: titulo });
-
-  const imagen = buscarImagen(carta.slug);
-  if (imagen) embed.setImage(`attachment://${path.basename(imagen)}`);
-
-  return { embed, imagen };
-}
+const { construirLectura } = require('../utils/tarotLectura');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -63,11 +24,12 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    // Si hay canal de tarot definido, solo se usa ahí
+    // Si hay canal de tarot definido, solo se usa ahí. El prefijo !tarot no
+    // pasa por aquí: ese funciona en cualquier canal a propósito.
     const canalTarot = loadConfig().tarotChannel;
     if (canalTarot && interaction.channelId !== canalTarot) {
       return interaction.reply({
-        content: `❌ Las cartas solo se leen en <#${canalTarot}> 🔮`,
+        content: `❌ Las cartas solo se leen en <#${canalTarot}> 🔮\nSi quieres tirar aquí, escribe \`!tarot\`.`,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -79,61 +41,17 @@ module.exports = {
     // privado y publicar la lectura como mensaje suelto del bot.
     await interaction.deferReply({ flags: anonimo ? MessageFlags.Ephemeral : undefined });
 
-    const tipo = interaction.options.getString('tipo') || 'dia';
-    const pregunta = interaction.options.getString('pregunta');
-    const usuario = interaction.user;
-
-    const embeds = [];
-    const ficheros = [];
-
-    if (tipo === 'tres') {
-      const sacadas = tirada(3);
-      sacadas.forEach((sacada, i) => {
-        const { embed, imagen } = embedCarta(sacada, POSICIONES[i]);
-        embeds.push(embed);
-        if (imagen) ficheros.push(new AttachmentBuilder(imagen));
-      });
-
-      // Cierre que lee las tres cartas como un solo mensaje
-      embeds.push(new EmbedBuilder()
-        .setColor(0x4A3B6B)
-        .setTitle('🕯️  Lectura conjunta')
-        .setDescription(lecturaConjunta(sacadas)));
-    } else {
-      const sacada = tipo === 'dia' ? cartaDelDia(usuario.id) : cartaAlAzar();
-      const { embed, imagen } = embedCarta(sacada, tipo === 'dia' ? '🌙 Tu carta de hoy' : '🃏 Tu carta');
-      embeds.push(embed);
-      if (imagen) ficheros.push(new AttachmentBuilder(imagen));
-    }
-
-    // Nota acorde al asunto que se consulta, si se reconoce alguno
-    const tema = detectarTema(pregunta);
-    if (tema) {
-      const nota = tema.notas[Math.floor(Math.random() * tema.notas.length)];
-      embeds[embeds.length - 1].addFields({ name: tema.titulo, value: `> ${nota}` });
-    }
-
-    embeds[embeds.length - 1].setFooter({
-      text: anonimo
-        ? 'Consulta anónima'
-        : tipo === 'dia'
-          ? `Carta del día de ${usuario.username} · una por jornada`
-          : `Consulta de ${usuario.username}`,
+    const lectura = construirLectura({
+      tipo: interaction.options.getString('tipo') || 'dia',
+      pregunta: interaction.options.getString('pregunta'),
+      usuario: interaction.user,
+      anonimo,
     });
 
-    const quien = anonimo ? 'Alguien' : `**${usuario.username}**`;
-    const cabecera = pregunta
-      ? `🔮 ${quien} consulta: *${pregunta}*\n${apertura()}`
-      : anonimo
-        ? `🔮 Lectura anónima\n${apertura()}`
-        : `🔮 Lectura para ${quien}\n${apertura()}`;
-
-    if (!anonimo) {
-      return interaction.editReply({ content: cabecera, embeds, files: ficheros, allowedMentions: { parse: [] } });
-    }
+    if (!anonimo) return interaction.editReply(lectura);
 
     // Mensaje suelto del bot: sin la cabecera que delataria quien consulto
-    await interaction.channel.send({ content: cabecera, embeds, files: ficheros, allowedMentions: { parse: [] } });
+    await interaction.channel.send(lectura);
     await interaction.editReply('✅ Tu lectura se publicó de forma anónima.');
   },
 };
